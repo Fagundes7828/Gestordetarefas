@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor do FAFA - Gestão de Tarefas Profissional</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #1a1a1a;
+        }
+
+        body.dark-mode {
+            background-color: #0f0f0f;
+            color: #f5f5f5;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --border-color: #e5e7eb;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1f2937;
+            --bg-secondary: #111827;
+            --border-color: #374151;
+            --text-primary: #f5f5f5;
+            --text-secondary: #d1d5db;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-secondary);
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 280px;
+            height: 70px;
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 40;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 8px;
+            border-radius: 8px;
+            hover: var(--bg-secondary);
+        }
+
+        .user-menu-button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        .user-menu-button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            object-fit: cover;
+        }
+
+        /* USER DROPDOWN MENU */
+        .user-dropdown {
+            position: fixed;
+            top: 70px;
+            right: 24px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 380px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+            animation: slideDown 0.2s ease;
+        }
+
+        .user-dropdown.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-dropdown-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .user-dropdown-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+        }
+
+        .user-dropdown-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-dropdown-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .user-dropdown-permission {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .user-dropdown-permission.admin {
+            background: #ef4444;
+        }
+
+        .user-dropdown-permission.gerente {
+            background: #f59e0b;
+        }
+
+        .user-dropdown-permission.colaborador {
+            background: #3b82f6;
+        }
+
+        .user-dropdown-permission.visualizador {
+            background: #6b7280;
+        }
+
+        .user-dropdown-body {
+            padding: 16px 24px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-info-item {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .user-info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .user-info-value {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .user-dropdown-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-small.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-small.danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 32px;
+        }
+
+        nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-button {
+            width: 100%;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .nav-button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 280px;
+            margin-top: 70px;
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        /* GRID DE TAREFAS */
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .task-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .task-priority {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .task-priority.high {
+            background: var(--danger);
+        }
+
+        .task-priority.medium {
+            background: var(--warning);
+        }
+
+        .task-priority.low {
+            background: var(--success);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .task-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .task-action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .task-action-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* GRID 2 COLUMNS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            #app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .header {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+                margin-top: 70px;
+            }
+
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-dropdown {
+                width: calc(100vw - 48px);
+                right: 24px;
+            }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* TIMESTAMP */
+        .timestamp {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* DIVIDER */
+        .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 16px 0;
+        }
+
+        /* ALERT BOX */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: rgba(59,130,246,0.1);
+            color: var(--primary);
+        }
+
+        /* STATUS BADGE */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: rgba(59,130,246,0.1);
+            color: var(--primary);
+        }
+
+        .status-progress {
+            background: rgba(245,158,11,0.1);
+            color: #d97706;
+        }
+
+        .status-completed {
+            background: rgba(16,185,129,0.1);
+            color: var(--success);
+        }
+
+        /* NOTIFICATION */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            z-index: 300;
+            animation: slideUp 0.3s ease;
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // ====== STATE ======
+        const appState = {
+            currentView: 'tarefas',
+            darkMode: localStorage.getItem('darkMode') === 'true',
+            showUserDropdown: false,
+            showProfileModal: false,
+            showTaskModal: false,
+            showTaskDetailModal: false,
+            showEditTaskModal: false,
+            selectedTask: null,
+            tasks: JSON.parse(localStorage.getItem('tasks') || '[]'),
+            user: {
+                name: localStorage.getItem('userName') || 'Seu Nome',
+                email: localStorage.getItem('userEmail') || 'seu@email.com',
+                role: localStorage.getItem('userRole') || 'Colaborador',
+                permission: localStorage.getItem('userPermission') || 'COLABORADOR',
+                bio: localStorage.getItem('userBio') || 'Bio do usuário',
+                photo: localStorage.getItem('userPhoto') || null,
+                photoEmoji: localStorage.getItem('userPhotoEmoji') || '👤',
+                registeredDate: localStorage.getItem('userRegisteredDate') || new Date().toLocaleDateString('pt-BR'),
+                lastAccess: new Date().toLocaleString('pt-BR')
+            }
+        };
+
+        // ====== HELPER FUNCTIONS ======
+        function saveState() {
+            localStorage.setItem('tasks', JSON.stringify(appState.tasks));
+            localStorage.setItem('userName', appState.user.name);
+            localStorage.setItem('userEmail', appState.user.email);
+            localStorage.setItem('userRole', appState.user.role);
+            localStorage.setItem('userPermission', appState.user.permission);
+            localStorage.setItem('userBio', appState.user.bio);
+            localStorage.setItem('userPhoto', appState.user.photo);
+            localStorage.setItem('userPhotoEmoji', appState.user.photoEmoji);
+            localStorage.setItem('userRegisteredDate', appState.user.registeredDate);
+            localStorage.setItem('darkMode', appState.darkMode);
+        }
+
+        function showNotification(msg, type = 'success') {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notif.textContent = msg;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('pt-BR');
+        }
+
+        function formatTime(date) {
+            return new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ====== TASK FUNCTIONS ======
+        function createTask(data) {
+            const task = {
+                id: Date.now(),
+                ...data,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                responsavel: appState.user.name,
+                comments: [],
+                attachments: []
+            };
+            appState.tasks.push(task);
+            saveState();
+            showNotification('✅ Tarefa criada com sucesso!');
+            render();
+        }
+
+        function updateTask(id, data) {
+            const task = appState.tasks.find(t => t.id === id);
+            if (task) {
+                Object.assign(task, data);
+                task.updatedAt = new Date();
+                saveState();
+                showNotification('✅ Tarefa atualizada!');
+                render();
+            }
+        }
+
+        function deleteTask(id) {
+            appState.tasks = appState.tasks.filter(t => t.id !== id);
+            saveState();
+            showNotification('✅ Tarefa deletada!');
+            render();
+        }
+
+        function duplicateTask(id) {
+            const original = appState.tasks.find(t => t.id === id);
+            if (original) {
+                const copy = {
+                    ...original,
+                    id: Date.now(),
+                    title: original.title + ' (Cópia)',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+                appState.tasks.push(copy);
+                saveState();
+                showNotification('✅ Tarefa duplicada!');
+                render();
+            }
+        }
+
+        // ====== RENDER FUNCTIONS ======
+        function renderUserDropdown() {
+            if (!appState.showUserDropdown) return '';
+
+            const getPermissionClass = (perm) => {
+                const map = {
+                    'ADMINISTRADOR': 'admin',
+                    'GERENTE': 'gerente',
+                    'COLABORADOR': 'colaborador',
+                    'VISUALIZADOR': 'visualizador'
+                };
+                return map[perm] || 'colaborador';
+            };
+
+            return `
+                <div class="user-dropdown active">
+                    <div class="user-dropdown-header">
+                        <div class="user-dropdown-avatar" ${appState.user.photo ? `style="background-image: url('${appState.user.photo}'); background-size: cover;"` : ''}>
+                            ${appState.user.photo ? '' : appState.user.photoEmoji}
+                        </div>
+                        <div class="user-dropdown-name">${appState.user.name}</div>
+                        <div class="user-dropdown-role">${appState.user.role}</div>
+                        <div class="user-dropdown-permission ${getPermissionClass(appState.user.permission)}">
+                            ${appState.user.permission}
+                        </div>
+                    </div>
+                    <div class="user-dropdown-body">
+                        <div class="user-info-item">
+                            <div class="user-info-label">Email</div>
+                            <div class="user-info-value">${appState.user.email}</div>
+                        </div>
+                        <div class="user-info-item">
+                            <div class="user-info-label">Biografia</div>
+                            <div class="user-info-value">${appState.user.bio}</div>
+                        </div>
+                        <div class="user-info-item">
+                            <div class="user-info-label">Cadastro</div>
+                            <div class="user-info-value">${appState.user.registeredDate}</div>
+                        </div>
+                        <div class="user-info-item">
+                            <div class="user-info-label">Último Acesso</div>
+                            <div class="user-info-value">${appState.user.lastAccess}</div>
+                        </div>
+                    </div>
+                    <div class="user-dropdown-footer">
+                        <button class="btn-small primary" onclick="appState.showProfileModal = true; appState.showUserDropdown = false; render();">
+                            ✏️ Editar Perfil
+                        </button>
+                        <button class="btn-small" onclick="appState.showUserDropdown = false; render();">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProfileModal() {
+            if (!appState.showProfileModal) return '';
+
+            return `
+                <div class="modal-overlay active" onclick="if(event.target === this) { appState.showProfileModal = false; render(); }">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h2>Editar Perfil</h2>
+                            <button class="modal-close" onclick="appState.showProfileModal = false; render();">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="profileForm" onsubmit="event.preventDefault(); 
+                                appState.user.name = document.getElementById('name').value;
+                                appState.user.email = document.getElementById('email').value;
+                                appState.user.role = document.getElementById('role').value;
+                                appState.user.bio = document.getElementById('bio').value;
+                                appState.user.photoEmoji = document.getElementById('emoji').value;
+                                saveState();
+                                appState.showProfileModal = false;
+                                showNotification('✅ Perfil atualizado!');
+                                render();
+                            ">
+                                <div class="form-group">
+                                    <label>Nome Completo</label>
+                                    <input type="text" id="name" value="${appState.user.name}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="email" value="${appState.user.email}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Cargo/Função</label>
+                                    <input type="text" id="role" value="${appState.user.role}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Biografia</label>
+                                    <textarea id="bio">${appState.user.bio}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Foto de Perfil</label>
+                                    <input type="file" id="photo" accept="image/*" onchange="
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => {
+                                            appState.user.photo = e.target.result;
+                                        };
+                                        reader.readAsDataURL(this.files[0]);
+                                    ">
+                                </div>
+                                <div class="form-group">
+                                    <label>Emoji do Avatar (se sem foto)</label>
+                                    <input type="text" id="emoji" value="${appState.user.photoEmoji}" maxlength="2">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="appState.showProfileModal = false; render();">Cancelar</button>
+                            <button class="btn btn-primary" onclick="document.getElementById('profileForm').dispatchEvent(new Event('submit'));">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTaskDetailModal() {
+            if (!appState.showTaskDetailModal || !appState.selectedTask) return '';
+
+            const task = appState.selectedTask;
+
+            return `
+                <div class="modal-overlay active" onclick="if(event.target === this) { appState.showTaskDetailModal = false; render(); }">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h2>${task.title}</h2>
+                            <button class="modal-close" onclick="appState.showTaskDetailModal = false; render();">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="margin-bottom: 24px;">
+                                <div class="form-grid">
+                                    <div>
+                                        <div class="user-info-label">Status</div>
+                                        <div class="status-badge status-${task.status.toLowerCase()}">
+                                            ${task.status}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="user-info-label">Prioridade</div>
+                                        <div class="task-priority ${task.priority.toLowerCase()}">
+                                            ${task.priority.toUpperCase()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="divider"></div>
+
+                            <div style="margin-bottom: 16px;">
+                                <div class="user-info-label">Descrição</div>
+                                <div class="user-info-value">${task.description || 'Sem descrição'}</div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div>
+                                    <div class="user-info-label">Área</div>
+                                    <div class="user-info-value">${task.area}</div>
+                                </div>
+                                <div>
+                                    <div class="user-info-label">Plataforma</div>
+                                    <div class="user-info-value">${task.platform}</div>
+                                </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div>
+                                    <div class="user-info-label">Data</div>
+                                    <div class="user-info-value">${task.date}</div>
+                                </div>
+                                <div>
+                                    <div class="user-info-label">Hora</div>
+                                    <div class="user-info-value">${task.time}</div>
+                                </div>
+                            </div>
+
+                            ${task.notes ? `<div style="margin-top: 16px;">
+                                <div class="user-info-label">Anotações</div>
+                                <div class="user-info-value">${task.notes}</div>
+                            </div>` : ''}
+
+                            ${task.script ? `<div style="margin-top: 16px;">
+                                <div class="user-info-label">Roteiro</div>
+                                <div class="user-info-value" style="white-space: pre-wrap;">${task.script}</div>
+                            </div>` : ''}
+
+                            ${task.links ? `<div style="margin-top: 16px;">
+                                <div class="user-info-label">Links</div>
+                                <div class="user-info-value">${task.links}</div>
+                            </div>` : ''}
+
+                            <div class="divider"></div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div>
+                                    <div class="user-info-label">Responsável</div>
+                                    <div class="user-info-value">${task.responsavel}</div>
+                                </div>
+                                <div>
+                                    <div class="user-info-label">Criada em</div>
+                                    <div class="user-info-value">${formatDate(task.createdAt)} ${formatTime(task.createdAt)}</div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 16px;">
+                                <div class="user-info-label">Última atualização</div>
+                                <div class="user-info-value">${formatDate(task.updatedAt)} ${formatTime(task.updatedAt)}</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="
+                                appState.showTaskDetailModal = false;
+                                appState.showEditTaskModal = true;
+                                render();
+                            ">✏️ Editar</button>
+                            <button class="btn btn-danger" onclick="
+                                deleteTask(${task.id});
+                                appState.showTaskDetailModal = false;
+                            ">🗑️ Deletar</button>
+                            <button class="btn btn-primary" onclick="appState.showTaskDetailModal = false; render();">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEditTaskModal() {
+            if (!appState.showEditTaskModal || !appState.selectedTask) return '';
+
+            const task = appState.selectedTask;
+
+            return `
+                <div class="modal-overlay active" onclick="if(event.target === this) { appState.showEditTaskModal = false; render(); }">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h2>Editar Tarefa</h2>
+                            <button class="modal-close" onclick="appState.showEditTaskModal = false; render();">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editTaskForm" onsubmit="event.preventDefault();
+                                const formData = new FormData(this);
+                                updateTask(${task.id}, {
+                                    title: formData.get('title'),
+                                    description: formData.get('description'),
+                                    area: formData.get('area'),
+                                    platform: formData.get('platform'),
+                                    date: formData.get('date'),
+                                    time: formData.get('time'),
+                                    status: formData.get('status'),
+                                    priority: formData.get('priority'),
+                                    notes: formData.get('notes'),
+                                    script: formData.get('script'),
+                                    links: formData.get('links')
+                                });
+                                appState.showEditTaskModal = false;
+                            ">
+                                <div class="form-group">
+                                    <label>Título</label>
+                                    <input type="text" name="title" value="${task.title}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea name="description">${task.description || ''}</textarea>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Área</label>
+                                        <select name="area" required>
+                                            <option value="Trabalho" ${task.area === 'Trabalho' ? 'selected' : ''}>Trabalho</option>
+                                            <option value="Pessoal" ${task.area === 'Pessoal' ? 'selected' : ''}>Pessoal</option>
+                                            <option value="Estudos" ${task.area === 'Estudos' ? 'selected' : ''}>Estudos</option>
+                                            <option value="Redes Sociais" ${task.area === 'Redes Sociais' ? 'selected' : ''}>Redes Sociais</option>
+                                            <option value="Projetos" ${task.area === 'Projetos' ? 'selected' : ''}>Projetos</option>
+                                            <option value="Clientes" ${task.area === 'Clientes' ? 'selected' : ''}>Clientes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Plataforma</label>
+                                        <select name="platform" required>
+                                            <option value="Geral" ${task.platform === 'Geral' ? 'selected' : ''}>Geral</option>
+                                            <option value="TikTok" ${task.platform === 'TikTok' ? 'selected' : ''}>TikTok</option>
+                                            <option value="Instagram" ${task.platform === 'Instagram' ? 'selected' : ''}>Instagram</option>
+                                            <option value="YouTube" ${task.platform === 'YouTube' ? 'selected' : ''}>YouTube</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Data</label>
+                                        <input type="date" name="date" value="${task.date}" required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Hora</label>
+                                        <input type="time" name="time" value="${task.time}">
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Status</label>
+                                        <select name="status" required>
+                                            <option value="Em Aberto" ${task.status === 'Em Aberto' ? 'selected' : ''}>Em Aberto</option>
+                                            <option value="Em Execução" ${task.status === 'Em Execução' ? 'selected' : ''}>Em Execução</option>
+                                            <option value="Concluída" ${task.status === 'Concluída' ? 'selected' : ''}>Concluída</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Prioridade</label>
+                                        <select name="priority" required>
+                                            <option value="Baixa" ${task.priority === 'Baixa' ? 'selected' : ''}>Baixa</option>
+                                            <option value="Média" ${task.priority === 'Média' ? 'selected' : ''}>Média</option>
+                                            <option value="Alta" ${task.priority === 'Alta' ? 'selected' : ''}>Alta</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Anotações</label>
+                                    <textarea name="notes">${task.notes || ''}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Roteiro/Passos</label>
+                                    <textarea name="script">${task.script || ''}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Links e Referências</label>
+                                    <textarea name="links">${task.links || ''}</textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="appState.showEditTaskModal = false; render();">Cancelar</button>
+                            <button class="btn btn-primary" onclick="document.getElementById('editTaskForm').dispatchEvent(new Event('submit'));">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTasksView() {
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                    <h2 style="font-size: 28px; font-weight: 600;">Minhas Tarefas</h2>
+                    <button class="btn btn-primary" onclick="appState.showTaskModal = true; render();">
+                        ➕ Nova Tarefa
+                    </button>
+                </div>
+
+                <div class="tasks-grid">
+                    ${appState.tasks.map(task => `
+                        <div class="task-card" onclick="appState.selectedTask = ${JSON.stringify(task).replace(/"/g, '&quot;')}; appState.showTaskDetailModal = true; render();">
+                            <div class="task-header">
+                                <div class="task-title">${task.title}</div>
+                                <div class="task-priority ${task.priority.toLowerCase()}">${task.priority[0]}</div>
+                            </div>
+                            <div class="task-meta">
+                                <span>📅 ${task.date}</span>
+                                <span>⏰ ${task.time}</span>
+                            </div>
+                            <div class="task-status">${task.status}</div>
+                            <div class="task-meta" style="margin-top: 8px;">
+                                <span>${task.area}</span>
+                                <span>${task.platform}</span>
+                            </div>
+                            <div class="task-actions">
+                                <button class="task-action-btn" onclick="event.stopPropagation(); appState.selectedTask = ${JSON.stringify(task).replace(/"/g, '&quot;')}; appState.showEditTaskModal = true; render();">
+                                    ✏️ Editar
+                                </button>
+                                <button class="task-action-btn" onclick="event.stopPropagation(); duplicateTask(${task.id});">
+                                    📋 Duplicar
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${appState.tasks.length === 0 ? '<p style="text-align: center; opacity: 0.6; margin-top: 32px;">Nenhuma tarefa criada ainda</p>' : ''}
+            `;
+        }
+
+        function renderNewTaskModal() {
+            if (!appState.showTaskModal) return '';
+
+            return `
+                <div class="modal-overlay active" onclick="if(event.target === this) { appState.showTaskModal = false; render(); }">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h2>Nova Tarefa</h2>
+                            <button class="modal-close" onclick="appState.showTaskModal = false; render();">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="newTaskForm" onsubmit="event.preventDefault();
+                                const formData = new FormData(this);
+                                createTask({
+                                    title: formData.get('title'),
+                                    description: formData.get('description'),
+                                    area: formData.get('area'),
+                                    platform: formData.get('platform'),
+                                    date: formData.get('date'),
+                                    time: formData.get('time'),
+                                    status: 'Em Aberto',
+                                    priority: formData.get('priority'),
+                                    notes: formData.get('notes'),
+                                    script: formData.get('script'),
+                                    links: formData.get('links')
+                                });
+                                appState.showTaskModal = false;
+                            ">
+                                <div class="form-group">
+                                    <label>Título *</label>
+                                    <input type="text" name="title" required autofocus placeholder="Digite o título da tarefa">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea name="description" placeholder="Descreva a tarefa..."></textarea>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Área *</label>
+                                        <select name="area" required>
+                                            <option>Trabalho</option>
+                                            <option>Pessoal</option>
+                                            <option>Estudos</option>
+                                            <option>Redes Sociais</option>
+                                            <option>Projetos</option>
+                                            <option>Clientes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Plataforma *</label>
+                                        <select name="platform" required>
+                                            <option>Geral</option>
+                                            <option>TikTok</option>
+                                            <option>Instagram</option>
+                                            <option>YouTube</option>
+                                            <option>LinkedIn</option>
+                                            <option>Twitter</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Data *</label>
+                                        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Hora</label>
+                                        <input type="time" name="time" value="09:00">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Prioridade *</label>
+                                    <select name="priority" required>
+                                        <option>Baixa</option>
+                                        <option selected>Média</option>
+                                        <option>Alta</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Anotações</label>
+                                    <textarea name="notes" placeholder="Suas anotações..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Roteiro/Passos</label>
+                                    <textarea name="script" placeholder="Descreva os passos..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Links e Referências</label>
+                                    <textarea name="links" placeholder="Cole links aqui (um por linha)..."></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="appState.showTaskModal = false; render();">Cancelar</button>
+                            <button class="btn btn-primary" onclick="document.getElementById('newTaskForm').dispatchEvent(new Event('submit'));">Criar Tarefa</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+
+            let mainContent = '';
+            if (appState.currentView === 'tarefas') {
+                mainContent = renderTasksView();
+            }
+
+            app.innerHTML = `
+                <div class="sidebar scrollbar-hide">
+                    <div class="sidebar-header">📅 GESTOR DO FAFA</div>
+                    <nav>
+                        <button class="nav-button ${appState.currentView === 'tarefas' ? 'active' : ''}" onclick="appState.currentView = 'tarefas'; render();">
+                            📋 Tarefas
+                        </button>
+                        <button class="nav-button ${appState.currentView === 'calendario' ? 'active' : ''}" onclick="appState.currentView = 'calendario'; render();">
+                            📅 Calendário
+                        </button>
+                        <button class="nav-button ${appState.currentView === 'dashboard' ? 'active' : ''}" onclick="appState.currentView = 'dashboard'; render();">
+                            📊 Dashboard
+                        </button>
+                    </nav>
+                </div>
+
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div class="header">
+                        <div class="header-title">Gestor do FAFA</div>
+                        <div class="header-right">
+                            <button class="theme-toggle" onclick="appState.darkMode = !appState.darkMode; render();">
+                                ${appState.darkMode ? '☀️' : '🌙'}
+                            </button>
+                            <button class="user-menu-button" onclick="appState.showUserDropdown = !appState.showUserDropdown; render();">
+                                <div class="user-avatar-small" ${appState.user.photo ? `style="background-image: url('${appState.user.photo}'); background-size: cover;"` : ''}>
+                                    ${appState.user.photo ? '' : appState.user.photoEmoji}
+                                </div>
+                                <span>${appState.user.name.split(' ')[0]}</span>
+                            </button>
+                        </div>
+                        ${renderUserDropdown()}
+                    </div>
+
+                    <div class="main-content scrollbar-hide">
+                        ${mainContent}
+                    </div>
+                </div>
+
+                ${renderNewTaskModal()}
+                ${renderTaskDetailModal()}
+                ${renderEditTaskModal()}
+                ${renderProfileModal()}
+            `;
+
+            if (appState.darkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+
+            saveState();
+        }
+
+        // Initialize
+        render();
+    </script>
+</body>
+</html>
