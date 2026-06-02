@@ -95,10 +95,63 @@
         <div class="cards" id="pendCards"></div>
       </section>
 
-      <!-- ===== PÁGINA CALENDÁRIO (placeholder por enquanto) ===== -->
+      <!-- ===== PÁGINA CALENDÁRIO ===== -->
       <section class="page" id="page-calendario">
-        <div class="section-head"><h2>Calendário</h2></div>
-        <div class="empty-state"><div class="big">📅</div>O calendário entra no próximo módulo. A estrutura já está pronta aqui.</div>
+
+        <!-- Barra de navegação do calendário -->
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-arrow" title="Ano anterior" onclick="navCal('year',-1)">«</button>
+            <button class="cal-arrow" title="Mês anterior" onclick="navCal('month',-1)">‹</button>
+            <div class="cal-title" id="calTitle">—</div>
+            <button class="cal-arrow" title="Próximo mês" onclick="navCal('month',1)">›</button>
+            <button class="cal-arrow" title="Próximo ano" onclick="navCal('year',1)">»</button>
+          </div>
+          <button class="cal-today" onclick="navCal('today')">Hoje</button>
+        </div>
+
+        <!-- Filtros rápidos -->
+        <div class="cal-filters">
+          <select id="fltStatus" onchange="renderCalendar()">
+            <option value="">Status: todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+          </select>
+          <select id="fltPriority" onchange="renderCalendar()">
+            <option value="">Prioridade: todas</option>
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+            <option value="critica">Crítica</option>
+          </select>
+          <input type="text" id="fltCat" placeholder="Categoria..." oninput="renderCalendar()">
+          <input type="text" id="fltProject" placeholder="Projeto..." oninput="renderCalendar()">
+          <input type="text" id="fltColor" list="colorList" placeholder="Cor..." oninput="renderCalendar()" style="display:none">
+        </div>
+
+        <div class="cal-layout">
+          <!-- Grade do calendário -->
+          <div class="cal-wrap">
+            <div class="cal-weekdays">
+              <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+
+          <!-- Legenda lateral -->
+          <aside class="cal-legend">
+            <h3>Legenda</h3>
+            <div class="lg-item"><span class="dot" style="background:#34c759"></span> Concluído</div>
+            <div class="lg-item"><span class="dot" style="background:#ff9500"></span> Em andamento</div>
+            <div class="lg-item"><span class="dot" style="background:#ff3b30"></span> Crítico</div>
+            <div class="lg-item"><span class="dot" style="background:#0a84ff"></span> Projeto</div>
+            <div class="lg-item"><span class="dot" style="background:#bf5af2"></span> Conteúdo</div>
+            <div class="lg-item"><span class="dot" style="background:#8e8e93"></span> Arquivado</div>
+            <div class="lg-sep"></div>
+            <div class="lg-note">As tarefas aparecem no <b>dia de início</b> e no <b>dia de conclusão</b>.</div>
+          </aside>
+        </div>
       </section>
 
       <!-- ===== PÁGINA TAREFAS ===== -->
@@ -119,7 +172,26 @@
     </main>
   </div>
 
-  <!-- ================= MODAL CRIAR TAREFA ================= -->
+  <!-- Pop-up flutuante de hover (visualização rápida e expandida) -->
+  <div class="cal-popover" id="calPopover"></div>
+
+  <!-- ================= MODAL DETALHES DO DIA ================= -->
+  <div class="overlay" id="dayOverlay" style="position:fixed;inset:0;background:rgba(34,28,40,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:55">
+    <div class="card modal-card">
+      <div class="day-head">
+        <div>
+          <div class="day-date" id="dayTitle">—</div>
+          <div class="day-weekday" id="dayWeekday">—</div>
+        </div>
+        <span class="day-count" id="dayCount">0 tarefas</span>
+      </div>
+      <div class="modal-body" id="dayBody" style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;margin-top:6px"></div>
+      <div class="modal-foot" style="margin-top:16px">
+        <button class="btn btn-google" style="width:100%" onclick="closeDayModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay" id="taskOverlay" style="position:fixed;inset:0;background:rgba(34,28,40,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50">
     <div class="card modal-card">
       <div class="logo" style="margin-bottom:16px">
@@ -161,6 +233,13 @@
             <label for="tkDue">Conclusão prevista</label>
             <input type="date" id="tkDue">
           </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="tkTime">Horário (opcional)</label>
+            <input type="time" id="tkTime">
+          </div>
+          <div class="field"></div>
         </div>
         <div class="row2">
           <div class="field">
