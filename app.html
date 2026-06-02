@@ -3,47 +3,198 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MF Agenda</title>
+  <title>Início · MF Agenda</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .panel{text-align:center}
-    .panel h1{font-size:26px;margin-bottom:6px}
-    .panel p{color:var(--text-soft);margin-bottom:24px}
-    .who{font-weight:700;color:var(--blue)}
-    .soon{background:var(--field-bg);border:1px solid rgba(255,255,255,.6);
-          border-radius:14px;padding:16px;font-size:14px;color:var(--text-soft);margin-bottom:22px}
-  </style>
 </head>
-<body>
+<body class="app">
+
+  <!-- Fundo com orbes flutuantes -->
   <div class="bg">
     <span class="orb orb-1"></span><span class="orb orb-2"></span>
     <span class="orb orb-3"></span><span class="orb orb-4"></span>
   </div>
 
-  <main class="card panel">
-    <div class="logo"><div class="logo-mark">MF</div></div>
-    <h1>Você está dentro! 🎉</h1>
-    <p>Logado como <span class="who" id="userName">...</span></p>
-    <div class="soon">📅 Aqui vão entrar o <b>calendário</b> e o <b>gerenciador de tarefas</b> nos próximos módulos.</div>
-    <button class="btn btn-primary" onclick="sair()">Sair da conta</button>
-  </main>
+  <div class="shell">
 
-  <script type="module">
-    import { auth } from "./firebase-config.js";
-    import { onAuthStateChanged, signOut }
-      from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+    <!-- ================= MENU LATERAL FIXO ================= -->
+    <aside class="sidebar">
+      <div class="brand-row">
+        <div class="logo-mark">MF</div>
+        <div>
+          <b>MF Agenda</b>
+          <span id="sideUser">...</span>
+        </div>
+      </div>
 
-    // Protege a página: se não estiver logado, volta para a tela de login
-    onAuthStateChanged(auth, (user) => {
-      if (!user) { window.location.href = "index.html"; return; }
-      document.getElementById("userName").textContent =
-        user.displayName || user.email;
-    });
+      <nav class="menu">
+        <button class="menu-item active" data-page="inicio" onclick="goPage('inicio')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z" stroke-linejoin="round"/></svg>
+          <span>Início</span>
+        </button>
+        <button class="menu-item" data-page="calendario" onclick="goPage('calendario')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 3v3M16 3v3" stroke-linecap="round"/></svg>
+          <span>Calendário</span>
+        </button>
+        <button class="menu-item" data-page="tarefas" onclick="goPage('tarefas')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6h11M9 12h11M9 18h11" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Tarefas</span>
+        </button>
+        <button class="menu-item" data-page="config" onclick="goPage('config')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7.6 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.3-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" stroke-linejoin="round"/></svg>
+          <span>Configurações</span>
+        </button>
+        <button class="menu-item danger" onclick="sair()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17l5-5-5-5M20 12H9M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Sair</span>
+        </button>
+      </nav>
+    </aside>
 
-    window.sair = async () => {
-      await signOut(auth);
-      window.location.href = "index.html";
-    };
-  </script>
+    <!-- ================= CONTEÚDO ================= -->
+    <main class="main">
+
+      <!-- Cabeçalho -->
+      <div class="topbar">
+        <div class="clock-box">
+          <div class="clock-info">
+            <div class="weekday" id="ckWeekday">—</div>
+            <div class="fulldate" id="ckDate">—</div>
+            <div class="time" id="ckTime">—</div>
+          </div>
+          <button class="go-cal" title="Abrir calendário na data de hoje" onclick="goPage('calendario')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <button class="btn-create" onclick="openTaskModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+          Criar Tarefa
+        </button>
+      </div>
+
+      <!-- ===== PÁGINA INÍCIO ===== -->
+      <section class="page active" id="page-inicio">
+
+        <!-- Resumo geral -->
+        <div class="summary">
+          <div class="stat s-total"><div class="label">Total de tarefas</div><div class="value" id="stTotal">0</div></div>
+          <div class="stat s-done"><div class="label">Concluídas</div><div class="value" id="stDone">0</div></div>
+          <div class="stat s-pend"><div class="label">Pendentes</div><div class="value" id="stPend">0</div></div>
+          <div class="stat s-late"><div class="label">Atrasadas</div><div class="value" id="stLate">0</div></div>
+          <div class="stat s-rate">
+            <div class="label">Taxa de conclusão</div>
+            <div class="value" id="stRate">0%</div>
+            <div class="bar"><i id="stBar" style="width:0%"></i></div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <h2>Tarefas pendentes e atrasadas</h2>
+          <span class="count" id="pendCount"></span>
+        </div>
+        <div class="cards" id="pendCards"></div>
+      </section>
+
+      <!-- ===== PÁGINA CALENDÁRIO (placeholder por enquanto) ===== -->
+      <section class="page" id="page-calendario">
+        <div class="section-head"><h2>Calendário</h2></div>
+        <div class="empty-state"><div class="big">📅</div>O calendário entra no próximo módulo. A estrutura já está pronta aqui.</div>
+      </section>
+
+      <!-- ===== PÁGINA TAREFAS ===== -->
+      <section class="page" id="page-tarefas">
+        <div class="section-head">
+          <h2>Todas as tarefas</h2>
+          <span class="count" id="allCount"></span>
+        </div>
+        <div class="cards" id="allCards"></div>
+      </section>
+
+      <!-- ===== PÁGINA CONFIGURAÇÕES ===== -->
+      <section class="page" id="page-config">
+        <div class="section-head"><h2>Configurações</h2></div>
+        <div class="empty-state"><div class="big">⚙️</div>Em breve: preferências, categorias e tema.</div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL CRIAR TAREFA ================= -->
+  <div class="overlay" id="taskOverlay" style="position:fixed;inset:0;background:rgba(34,28,40,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50">
+    <div class="card modal-card">
+      <div class="logo" style="margin-bottom:16px">
+        <h1 style="font-size:21px" id="modalTitle">Nova Tarefa</h1>
+      </div>
+
+      <div class="alert" id="taskAlert"></div>
+
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:13px;overflow-y:auto">
+        <div class="field">
+          <label for="tkTitle">Título da tarefa</label>
+          <input type="text" id="tkTitle" placeholder="Ex.: Gravar episódio 12">
+        </div>
+        <div class="field">
+          <label for="tkDesc">Descrição</label>
+          <textarea id="tkDesc" placeholder="Detalhes da tarefa..."></textarea>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="tkCat">Categoria</label>
+            <input type="text" id="tkCat" placeholder="Ex.: Gravação">
+          </div>
+          <div class="field">
+            <label for="tkPriority">Prioridade</label>
+            <select id="tkPriority">
+              <option value="baixa">Baixa</option>
+              <option value="media" selected>Média</option>
+              <option value="alta">Alta</option>
+              <option value="critica">Crítica</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="tkStart">Data de início</label>
+            <input type="date" id="tkStart">
+          </div>
+          <div class="field">
+            <label for="tkDue">Conclusão prevista</label>
+            <input type="date" id="tkDue">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="tkStatus">Status inicial</label>
+            <select id="tkStatus">
+              <option value="pendente" selected>Pendente</option>
+              <option value="andamento">Em andamento</option>
+              <option value="concluida">Concluída</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tkProject">Projeto vinculado (opcional)</label>
+            <input type="text" id="tkProject" placeholder="Ex.: Canal YouTube">
+          </div>
+        </div>
+        <div class="field">
+          <label>Cor de identificação</label>
+          <div class="swatches" id="tkSwatches">
+            <div class="sw sel" data-color="#0a84ff" style="background:#0a84ff" onclick="pickColor(this)"></div>
+            <div class="sw" data-color="#34c759" style="background:#34c759" onclick="pickColor(this)"></div>
+            <div class="sw" data-color="#ff9500" style="background:#ff9500" onclick="pickColor(this)"></div>
+            <div class="sw" data-color="#ff3b30" style="background:#ff3b30" onclick="pickColor(this)"></div>
+            <div class="sw" data-color="#bf5af2" style="background:#bf5af2" onclick="pickColor(this)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot" style="display:flex;gap:10px;margin-top:18px">
+        <button class="btn btn-google" style="flex:1" onclick="closeTaskModal()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" id="btnSaveTask" onclick="saveTask()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
