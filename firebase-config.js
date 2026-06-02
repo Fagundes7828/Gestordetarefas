@@ -10,17 +10,18 @@
 //   e da aba Authentication, que você configura no console.)
 // =========================================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { initializeApp } from "firebase/app";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:            "COLE_SUA_API_KEY_AQUI",
-  authDomain:        "SEU-PROJETO.firebaseapp.com",
-  projectId:         "SEU-PROJETO",
-  storageBucket:     "SEU-PROJETO.appspot.com",
-  messagingSenderId: "000000000000",
-  appId:             "1:000000000000:web:xxxxxxxxxxxx"
+  apiKey:            "AIzaSyDuiLRMdKbWPePxLNguQSTHiQHEjS54Lwg",
+  authDomain:        "gestordetarefasfagundes.firebaseapp.com",
+  projectId:         "gestordetarefasfagundes",
+  storageBucket:     "gestordetarefasfagundes.firebasestorage.app",
+  messagingSenderId: "895076014281",
+  appId:             "1:895076014281:web:59cf894813ecb8ea1d1518"
+  measurementId:     "G-BRL22K8J1B"
 };
 
 // Inicializa o Firebase e exporta o que o resto do app vai usar
