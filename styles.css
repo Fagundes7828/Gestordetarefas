@@ -149,3 +149,188 @@ body{
   .card{padding:28px 22px 24px;border-radius:22px}
   .logo h1{font-size:22px}
 }
+
+/* =========================================================
+   DASHBOARD — MF Agenda
+   ========================================================= */
+
+/* Reset de layout do body só para a página do app */
+body.app{
+  display:block;
+  place-items:unset;
+  overflow:auto;
+  padding:0;
+}
+
+.shell{display:flex;min-height:100vh;gap:18px;padding:18px}
+
+/* ---------- Menu lateral fixo ---------- */
+.sidebar{
+  width:240px;flex-shrink:0;position:sticky;top:18px;height:calc(100vh - 36px);
+  background:var(--glass);backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:24px;
+  box-shadow:0 20px 60px -15px rgba(40,30,90,.3), inset 0 1px 0 rgba(255,255,255,.6);
+  padding:24px 16px;display:flex;flex-direction:column;
+}
+.sidebar .brand-row{display:flex;align-items:center;gap:11px;padding:0 8px 22px;margin-bottom:8px;border-bottom:1px solid rgba(60,60,67,.12)}
+.sidebar .logo-mark{width:42px;height:42px;border-radius:13px;font-size:17px}
+.sidebar .brand-row b{font-size:17px;font-weight:700}
+.sidebar .brand-row span{font-size:11.5px;color:var(--text-soft);display:block}
+
+.menu{display:flex;flex-direction:column;gap:5px;margin-top:14px;flex:1}
+.menu-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+  font-size:15px;font-weight:600;color:var(--text-soft);cursor:pointer;border:none;
+  background:none;font-family:var(--font);text-align:left;width:100%;
+  transition:.18s;
+}
+.menu-item svg{width:20px;height:20px;flex-shrink:0;stroke-width:2}
+.menu-item:hover{background:rgba(255,255,255,.5);color:var(--text);transform:translateX(3px)}
+.menu-item.active{background:#fff;color:var(--blue);box-shadow:0 4px 12px -4px rgba(10,132,255,.4)}
+.menu-item.danger:hover{background:rgba(255,59,48,.12);color:var(--danger);transform:translateX(3px)}
+
+/* ---------- Conteúdo principal ---------- */
+.main{flex:1;min-width:0;padding:6px 8px 40px}
+
+/* ---------- Cabeçalho ---------- */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:26px;flex-wrap:wrap}
+.clock-box{display:flex;align-items:center;gap:14px}
+.clock-info .weekday{font-size:22px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize}
+.clock-info .fulldate{font-size:14px;color:var(--text-soft);margin-top:1px}
+.clock-info .time{font-size:15px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;margin-top:3px}
+.go-cal{
+  width:44px;height:44px;border-radius:14px;border:1px solid var(--glass-border);
+  background:var(--glass);backdrop-filter:blur(12px);cursor:pointer;
+  display:grid;place-items:center;color:var(--text);transition:.18s;flex-shrink:0;
+}
+.go-cal svg{width:22px;height:22px;stroke-width:2.2}
+.go-cal:hover{background:#fff;transform:translateX(3px);box-shadow:0 6px 16px -6px rgba(0,0,0,.3)}
+
+/* Botão Criar Tarefa */
+.btn-create{
+  display:flex;align-items:center;gap:9px;font-family:var(--font);font-size:15px;font-weight:600;
+  color:var(--text);background:var(--glass);border:1px solid var(--glass-border);
+  backdrop-filter:blur(12px);border-radius:15px;padding:13px 20px;cursor:pointer;
+  transition:.22s cubic-bezier(.2,.8,.2,1);
+}
+.btn-create svg{width:19px;height:19px;stroke-width:2.4}
+.btn-create:hover{
+  background:rgba(255,59,48,.9);color:#fff;border-color:transparent;
+  transform:translateY(-3px) scale(1.04);
+  box-shadow:0 14px 28px -10px rgba(255,59,48,.6);
+}
+
+/* ---------- Cartões de resumo ---------- */
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+.stat{
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:20px;padding:18px 16px;
+  box-shadow:0 10px 30px -14px rgba(40,30,90,.25);transition:.2s;
+}
+.stat:hover{transform:translateY(-3px);box-shadow:0 16px 36px -14px rgba(40,30,90,.35)}
+.stat .label{font-size:12.5px;font-weight:600;color:var(--text-soft);margin-bottom:7px}
+.stat .value{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.stat.s-total .value{color:var(--text)}
+.stat.s-done .value{color:var(--success)}
+.stat.s-pend .value{color:#ff9500}
+.stat.s-late .value{color:var(--danger)}
+.stat.s-rate .value{color:var(--blue)}
+.stat .bar{height:6px;border-radius:4px;background:rgba(60,60,67,.14);margin-top:10px;overflow:hidden}
+.stat .bar i{display:block;height:100%;background:var(--blue);border-radius:4px;transition:width .5s}
+
+/* ---------- Seção de tarefas pendentes ---------- */
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.section-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.section-head .count{font-size:13px;color:var(--text-soft);font-weight:600}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+
+.task-card{
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:20px;padding:18px;
+  box-shadow:0 10px 30px -14px rgba(40,30,90,.25);
+  border-left:5px solid var(--blue);transition:.22s;position:relative;
+  display:flex;flex-direction:column;gap:10px;
+}
+.task-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -16px rgba(40,30,90,.4)}
+.task-card.lv-green{border-left-color:var(--success)}
+.task-card.lv-yellow{border-left-color:#ffcc00}
+.task-card.lv-red{border-left-color:var(--danger)}
+.task-card.lv-critical{border-left-color:#b30000;background:rgba(255,59,48,.06)}
+
+.tc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tc-title{font-size:16px;font-weight:700;line-height:1.25}
+.tc-cat{font-size:11px;font-weight:600;color:var(--text-soft);background:rgba(60,60,67,.1);padding:3px 9px;border-radius:8px;white-space:nowrap}
+.tc-body{font-size:13.5px;color:var(--text-soft);line-height:1.4}
+.tc-due{font-size:12.5px;font-weight:600;color:var(--text)}
+.tc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid rgba(60,60,67,.1)}
+.tc-status{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:8px}
+.st-pendente{background:rgba(255,149,0,.16);color:#b35e00}
+.st-andamento{background:rgba(10,132,255,.14);color:var(--blue-dark)}
+.st-concluida{background:rgba(52,199,89,.18);color:#1d7a3a}
+.tc-late{font-size:11.5px;font-weight:700}
+.tc-late.green{color:var(--success)}
+.tc-late.yellow{color:#b38600}
+.tc-late.red{color:var(--danger)}
+.tc-late.critical{color:#b30000}
+.tc-check{
+  position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:50%;
+  border:2px solid rgba(60,60,67,.25);background:rgba(255,255,255,.5);cursor:pointer;
+  display:grid;place-items:center;transition:.15s;opacity:0;
+}
+.task-card:hover .tc-check{opacity:1}
+.tc-check:hover{border-color:var(--success);background:var(--success)}
+.tc-check svg{width:15px;height:15px;color:#fff;opacity:0}
+.tc-check:hover svg{opacity:1}
+
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--text-soft);
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;
+}
+.empty-state .big{font-size:38px;margin-bottom:10px}
+
+/* ---------- Modal de tarefa ---------- */
+.modal-card{max-width:520px;width:100%}
+.modal-card .modal-body{max-height:64vh}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field textarea{
+  font-family:var(--font);font-size:15px;color:var(--text);background:var(--field-bg);
+  border:1px solid rgba(255,255,255,.6);border-radius:13px;padding:12px 14px;resize:vertical;
+  min-height:70px;backdrop-filter:blur(8px);
+}
+.field textarea:focus{outline:none;border-color:var(--blue);background:rgba(255,255,255,.7);box-shadow:0 0 0 4px rgba(10,132,255,.15)}
+.field select{
+  font-family:var(--font);font-size:15px;color:var(--text);background:var(--field-bg);
+  border:1px solid rgba(255,255,255,.6);border-radius:13px;padding:12px 14px;
+  cursor:pointer;backdrop-filter:blur(8px);
+}
+.field select:focus{outline:none;border-color:var(--blue)}
+.field input[type=date]{
+  font-family:var(--font);font-size:15px;color:var(--text);background:var(--field-bg);
+  border:1px solid rgba(255,255,255,.6);border-radius:13px;padding:12px 14px;backdrop-filter:blur(8px);
+}
+.field input[type=date]:focus{outline:none;border-color:var(--blue)}
+
+/* mostra/esconde páginas internas */
+.page{display:none}
+.page.active{display:block;animation:rise .35s ease both}
+
+/* ---------- Responsivo do dashboard ---------- */
+@media (max-width:920px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .shell{flex-direction:column;padding:12px;gap:12px}
+  .sidebar{width:auto;position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:14px}
+  .sidebar .brand-row{border:none;padding:0;margin:0 12px 0 4px}
+  .menu{flex-direction:row;flex-wrap:wrap;margin:0;flex:1;justify-content:flex-end;gap:4px}
+  .menu-item{width:auto;padding:10px 12px}
+  .menu-item span{display:none}
+  .menu-item.active span{display:inline}
+  .row2{grid-template-columns:1fr}
+}
+@media (max-width:460px){
+  .summary{grid-template-columns:1fr 1fr}
+  .stat .value{font-size:24px}
+}
