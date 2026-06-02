@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Calendário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#221c1a;
+    --cream:#f7f1e7;
+    --paper:#fffdf8;
+    --line:#e4dccd;
+    --muted:#8a8073;
+    --coral:#e0623d;
+    --coral-soft:#fbe5dc;
+    --teal:#2f7a6f;
+    --teal-soft:#dcefe7;
+    --gold:#c79a2e;
+    --gold-soft:#f6ecca;
+    --plum:#7a4f8a;
+    --plum-soft:#efe2f4;
+    --shadow:0 18px 40px -22px rgba(40,28,20,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'DM Sans',system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, #fbe9dd 0, transparent 45%),
+      radial-gradient(circle at 88% 92%, #e3f1ec 0, transparent 45%),
+      var(--cream);
+    color:var(--ink);
+    min-height:100vh;
+    padding:32px 18px 60px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .wrap{width:100%;max-width:860px}
+
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:14px}
+  .brand{display:flex;flex-direction:column;line-height:1}
+  .brand .kicker{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(34px,6vw,52px);letter-spacing:-.01em}
+  .brand h1 em{font-style:italic;color:var(--coral)}
+  .today-btn{
+    font-family:'DM Sans';font-weight:600;font-size:14px;
+    background:var(--ink);color:var(--paper);border:none;border-radius:999px;
+    padding:11px 20px;cursor:pointer;transition:transform .15s,opacity .2s;
+  }
+  .today-btn:hover{transform:translateY(-2px);opacity:.9}
+
+  .nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px}
+  .month-label{font-family:'Fraunces',serif;font-size:26px;font-weight:500}
+  .month-label span{color:var(--muted);font-weight:400}
+  .arrows{display:flex;gap:8px}
+  .arrows button{
+    width:42px;height:42px;border-radius:14px;border:1px solid var(--line);
+    background:var(--paper);font-size:20px;color:var(--ink);cursor:pointer;
+    display:grid;place-items:center;transition:.15s;
+  }
+  .arrows button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .calendar{
+    background:var(--paper);border:1px solid var(--line);border-radius:24px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line);background:var(--cream)}
+  .weekdays div{
+    text-align:center;padding:13px 0;font-size:11px;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  }
+  .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .cell{
+    min-height:96px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:8px;cursor:pointer;position:relative;transition:background .15s;display:flex;flex-direction:column;gap:4px;
+  }
+  .cell:nth-child(7n){border-right:none}
+  .cell:hover{background:var(--cream)}
+  .cell.muted{background:#faf6ee;cursor:default}
+  .cell.muted:hover{background:#faf6ee}
+  .cell.muted .num{color:#c9c0b0}
+  .num{font-size:14px;font-weight:600;width:28px;height:28px;display:grid;place-items:center;border-radius:50%}
+  .cell.today .num{background:var(--coral);color:#fff}
+  .dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+  .pill{
+    font-size:11px;font-weight:500;padding:2px 7px;border-radius:7px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+  }
+  .more{font-size:10px;color:var(--muted);font-weight:600;padding-left:2px}
+
+  /* cores das categorias */
+  .c-coral{background:var(--coral-soft);color:#b13d1d}
+  .c-teal{background:var(--teal-soft);color:#1f5a51}
+  .c-gold{background:var(--gold-soft);color:#8a6a12}
+  .c-plum{background:var(--plum-soft);color:#5d3a6b}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(34,28,26,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .overlay.open{display:flex}
+  .modal{background:var(--paper);width:100%;max-width:420px;border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+  .modal-head{padding:22px 24px 16px;border-bottom:1px solid var(--line)}
+  .modal-head .date-big{font-family:'Fraunces',serif;font-size:24px;font-weight:600}
+  .modal-head .date-sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .modal-body{padding:18px 24px;max-height:50vh;overflow-y:auto}
+  .ev-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+  .ev-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--cream)}
+  .ev-row .swatch{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .ev-row .txt{flex:1;font-size:14px;font-weight:500}
+  .ev-row .del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:6px}
+  .ev-row .del:hover{color:var(--coral);background:var(--coral-soft)}
+  .empty{font-size:13px;color:var(--muted);text-align:center;padding:14px 0}
+  label{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);display:block;margin-bottom:6px}
+  input[type=text]{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:12px;
+    font-family:'DM Sans';font-size:14px;color:var(--ink);background:var(--cream);
+  }
+  input[type=text]:focus{outline:none;border-color:var(--coral)}
+  .swatches{display:flex;gap:9px;margin:12px 0 4px}
+  .sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.12s}
+  .sw.sel{border-color:var(--ink)}
+  .sw-coral{background:var(--coral)} .sw-teal{background:var(--teal)} .sw-gold{background:var(--gold)} .sw-plum{background:var(--plum)}
+  .modal-foot{padding:14px 24px 22px;display:flex;gap:10px}
+  .btn{flex:1;padding:12px;border-radius:12px;border:none;font-family:'DM Sans';font-weight:600;font-size:14px;cursor:pointer;transition:.15s}
+  .btn-add{background:var(--coral);color:#fff}
+  .btn-add:hover{background:#c9512f}
+  .btn-close{background:var(--cream);color:var(--ink);border:1px solid var(--line)}
+  .btn-close:hover{background:var(--line)}
+
+  footer{margin-top:22px;font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="kicker">Agenda · MF</span>
+      <h1>Meu <em>Calendário</em></h1>
+    </div>
+    <button class="today-btn" onclick="goToday()">Hoje</button>
+  </header>
+
+  <div class="nav">
+    <div class="month-label" id="monthLabel"></div>
+    <div class="arrows">
+      <button onclick="changeMonth(-1)" aria-label="Mês anterior">‹</button>
+      <button onclick="changeMonth(1)" aria-label="Próximo mês">›</button>
+    </div>
+  </div>
+
+  <div class="calendar">
+    <div class="weekdays">
+      <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <footer>Clique em qualquer dia para adicionar um evento. Tudo fica salvo neste navegador.</footer>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="date-big" id="modalDate"></div>
+      <div class="date-sub" id="modalWeekday"></div>
+    </div>
+    <div class="modal-body">
+      <div class="ev-list" id="evList"></div>
+      <label for="evInput">Novo evento</label>
+      <input type="text" id="evInput" placeholder="Ex.: Reunião com cliente" onkeydown="if(event.key==='Enter')addEvent()">
+      <div class="swatches" id="swatches">
+        <div class="sw sw-coral sel" data-color="coral" onclick="selectColor(this)"></div>
+        <div class="sw sw-teal" data-color="teal" onclick="selectColor(this)"></div>
+        <div class="sw sw-gold" data-color="gold" onclick="selectColor(this)"></div>
+        <div class="sw sw-plum" data-color="plum" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-close" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-add" onclick="addEvent()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+
+  let current = new Date();
+  let selectedKey = null;
+  let selectedColor = 'coral';
+
+  // Carrega eventos salvos
+  function loadEvents(){
+    try { return JSON.parse(localStorage.getItem('mf_eventos') || '{}'); }
+    catch(e){ return {}; }
+  }
+  function saveEvents(ev){
+    localStorage.setItem('mf_eventos', JSON.stringify(ev));
+  }
+  let eventos = loadEvents();
+
+  function keyFor(y,m,d){ return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+
+  function render(){
+    const y = current.getFullYear();
+    const m = current.getMonth();
+    document.getElementById('monthLabel').innerHTML = MESES[m] + ' <span>' + y + '</span>';
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    const firstDay = new Date(y, m, 1).getDay();      // 0=domingo
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const daysPrev = new Date(y, m, 0).getDate();
+
+    const today = new Date();
+    const isToday = (d) => d===today.getDate() && m===today.getMonth() && y===today.getFullYear();
+
+    // dias do mês anterior (preenchimento)
+    for(let i=firstDay-1;i>=0;i--){
+      grid.appendChild(makeCell(daysPrev-i, true));
+    }
+    // dias do mês atual
+    for(let d=1;d<=daysInMonth;d++){
+      grid.appendChild(makeCell(d, false, keyFor(y,m,d), isToday(d)));
+    }
+    // completa a última linha
+    const total = firstDay + daysInMonth;
+    const trailing = (7 - (total % 7)) % 7;
+    for(let d=1;d<=trailing;d++){
+      grid.appendChild(makeCell(d, true));
+    }
+  }
+
+  function makeCell(dayNum, muted, key, today){
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (muted?' muted':'') + (today?' today':'');
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = dayNum;
+    cell.appendChild(num);
+
+    if(!muted){
+      cell.onclick = () => openModal(key);
+      const list = eventos[key] || [];
+      const dots = document.createElement('div');
+      dots.className = 'dots';
+      list.slice(0,3).forEach(ev => {
+        const pill = document.createElement('div');
+        pill.className = 'pill c-' + ev.color;
+        pill.textContent = ev.title;
+        dots.appendChild(pill);
+      });
+      if(list.length>3){
+        const more = document.createElement('div');
+        more.className = 'more';
+        more.textContent = '+' + (list.length-3) + ' mais';
+        dots.appendChild(more);
+      }
+      cell.appendChild(dots);
+    }
+    return cell;
+  }
+
+  function changeMonth(delta){
+    current.setMonth(current.getMonth()+delta);
+    render();
+  }
+  function goToday(){ current = new Date(); render(); }
+
+  // ---- Modal ----
+  function openModal(key){
+    selectedKey = key;
+    const [y,m,d] = key.split('-').map(Number);
+    const dateObj = new Date(y, m-1, d);
+    document.getElementById('modalDate').textContent = d + ' de ' + MESES[m-1];
+    document.getElementById('modalWeekday').textContent = DIAS[dateObj.getDay()] + ', ' + y;
+    document.getElementById('evInput').value = '';
+    renderEventList();
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(()=>document.getElementById('evInput').focus(),50);
+  }
+  function closeModal(){
+    document.getElementById('overlay').classList.remove('open');
+    selectedKey = null;
+  }
+  function renderEventList(){
+    const list = eventos[selectedKey] || [];
+    const box = document.getElementById('evList');
+    box.innerHTML = '';
+    if(list.length===0){
+      box.innerHTML = '<div class="empty">Nenhum evento ainda neste dia.</div>';
+      return;
+    }
+    list.forEach((ev,i)=>{
+      const row = document.createElement('div');
+      row.className = 'ev-row';
+      row.innerHTML =
+        '<div class="swatch sw-'+ev.color+'" style="background:var(--'+ev.color+')"></div>' +
+        '<div class="txt"></div>' +
+        '<button class="del" title="Excluir">×</button>';
+      row.querySelector('.txt').textContent = ev.title;
+      row.querySelector('.del').onclick = () => deleteEvent(i);
+      box.appendChild(row);
+    });
+  }
+  function selectColor(el){
+    document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel'));
+    el.classList.add('sel');
+    selectedColor = el.dataset.color;
+  }
+  function addEvent(){
+    const input = document.getElementById('evInput');
+    const title = input.value.trim();
+    if(!title) return;
+    if(!eventos[selectedKey]) eventos[selectedKey] = [];
+    eventos[selectedKey].push({title, color:selectedColor});
+    saveEvents(eventos);
+    input.value = '';
+    renderEventList();
+    render();
+  }
+  function deleteEvent(i){
+    eventos[selectedKey].splice(i,1);
+    if(eventos[selectedKey].length===0) delete eventos[selectedKey];
+    saveEvents(eventos);
+    renderEventList();
+    render();
+  }
+
+  // fecha modal ao clicar fora
+  document.getElementById('overlay').addEventListener('click',e=>{
+    if(e.target.id==='overlay') closeModal();
+  });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+  render();
+</script>
+</body>
+</html>

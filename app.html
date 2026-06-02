@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MF Agenda</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .panel{text-align:center}
+    .panel h1{font-size:26px;margin-bottom:6px}
+    .panel p{color:var(--text-soft);margin-bottom:24px}
+    .who{font-weight:700;color:var(--blue)}
+    .soon{background:var(--field-bg);border:1px solid rgba(255,255,255,.6);
+          border-radius:14px;padding:16px;font-size:14px;color:var(--text-soft);margin-bottom:22px}
+  </style>
+</head>
+<body>
+  <div class="bg">
+    <span class="orb orb-1"></span><span class="orb orb-2"></span>
+    <span class="orb orb-3"></span><span class="orb orb-4"></span>
+  </div>
+
+  <main class="card panel">
+    <div class="logo"><div class="logo-mark">MF</div></div>
+    <h1>Você está dentro! 🎉</h1>
+    <p>Logado como <span class="who" id="userName">...</span></p>
+    <div class="soon">📅 Aqui vão entrar o <b>calendário</b> e o <b>gerenciador de tarefas</b> nos próximos módulos.</div>
+    <button class="btn btn-primary" onclick="sair()">Sair da conta</button>
+  </main>
+
+  <script type="module">
+    import { auth } from "./firebase-config.js";
+    import { onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+    // Protege a página: se não estiver logado, volta para a tela de login
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { window.location.href = "index.html"; return; }
+      document.getElementById("userName").textContent =
+        user.displayName || user.email;
+    });
+
+    window.sair = async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
+  </script>
+</body>
+</html>
