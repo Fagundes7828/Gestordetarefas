@@ -18,7 +18,6 @@ const STATUS = { pendente:"Pendente", andamento:"Em andamento", concluida:"Concl
 
 let usuario = null;
 let tarefas = [];
-let corSelecionada = "#0a84ff";
 let editandoId = null;                 // id da tarefa em edição (null = nova)
 let calRef = new Date();               // mês/ano em exibição no calendário
 
@@ -92,7 +91,6 @@ window.openTaskModal = function (tarefa = null) {
   const g = id => document.getElementById(id);
   g("tkTitle").value = tarefa?.titulo || "";
   g("tkDesc").value = tarefa?.descricao || "";
-  g("tkCat").value = tarefa?.categoria && tarefa.categoria !== "Geral" ? tarefa.categoria : "";
   g("tkPriority").value = tarefa?.prioridade || "media";
   g("tkStart").value = tarefa?.inicio || dataHojeISO();
   g("tkDue").value = tarefa?.conclusao || dataHojeISO();
@@ -100,35 +98,38 @@ window.openTaskModal = function (tarefa = null) {
   g("tkStatus").value = tarefa?.status || "pendente";
   g("tkProject").value = tarefa?.projeto || "";
 
-  corSelecionada = tarefa?.cor || "#0a84ff";
-  document.querySelectorAll("#tkSwatches .sw").forEach(s =>
-    s.classList.toggle("sel", s.dataset.color === corSelecionada));
+  // Categoria (dropdown) + cor herdada
+  montarCatDropdown();
+  definirCategoriaSelecionada(tarefa?.categoria || "");
+  g("tkColor").value = tarefa?.cor || categoriaCor(tarefa?.categoria) || "#0a84ff";
 
   document.getElementById("taskOverlay").style.display = "flex";
 };
-window.closeTaskModal = () => { document.getElementById("taskOverlay").style.display = "none"; editandoId = null; };
-window.pickColor = function (el) {
-  document.querySelectorAll("#tkSwatches .sw").forEach(s => s.classList.remove("sel"));
-  el.classList.add("sel"); corSelecionada = el.dataset.color;
+window.closeTaskModal = () => {
+  document.getElementById("taskOverlay").style.display = "none";
+  document.getElementById("catDropdown")?.classList.remove("open");
+  editandoId = null;
 };
 
 window.saveTask = async function () {
   const titulo = document.getElementById("tkTitle").value.trim();
-  if (!titulo) {
-    const a = document.getElementById("taskAlert");
-    a.textContent = "Dê um título à tarefa."; a.className = "alert show error"; return;
-  }
+  const categoria = document.getElementById("tkCat").value.trim();
+  const a = document.getElementById("taskAlert");
+
+  if (!titulo) { a.textContent = "Dê um título à tarefa."; a.className = "alert show error"; return; }
+  if (!categoria) { a.textContent = "Selecione uma categoria. Cadastre categorias em Configurações."; a.className = "alert show error"; return; }
+
   const dados = {
     titulo,
     descricao: document.getElementById("tkDesc").value.trim(),
-    categoria: document.getElementById("tkCat").value.trim() || "Geral",
+    categoria,
     prioridade: document.getElementById("tkPriority").value,
     inicio: document.getElementById("tkStart").value || null,
     conclusao: document.getElementById("tkDue").value || null,
     hora: document.getElementById("tkTime").value || null,
     status: document.getElementById("tkStatus").value,
     projeto: document.getElementById("tkProject").value.trim() || null,
-    cor: corSelecionada
+    cor: document.getElementById("tkColor").value || "#0a84ff"
   };
   const btn = document.getElementById("btnSaveTask");
   btn.disabled = true; btn.textContent = "Salvando...";
@@ -274,12 +275,12 @@ window.navCal = function (tipo, delta) {
 function tarefasFiltradas() {
   const fS = document.getElementById("fltStatus").value;
   const fP = document.getElementById("fltPriority").value;
-  const fC = document.getElementById("fltCat").value.trim().toLowerCase();
+  const fC = document.getElementById("fltCat").value;
   const fJ = document.getElementById("fltProject").value.trim().toLowerCase();
   return tarefas.filter(t => {
     if (fS && t.status !== fS) return false;
     if (fP && t.prioridade !== fP) return false;
-    if (fC && !(t.categoria||"").toLowerCase().includes(fC)) return false;
+    if (fC && (t.categoria||"") !== fC) return false;
     if (fJ && !(t.projeto||"").toLowerCase().includes(fJ)) return false;
     return true;
   });
@@ -471,7 +472,6 @@ document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModa
 
 let avatarCor = "#0a84ff";
 let categorias = [];
-const CORES_CAT = ['#34c759','#0a84ff','#ff9500','#ff3b30','#bf5af2','#8e8e93','#5e5ce6','#ff2d55'];
 
 function iniciais(nome) {
   if (!nome) return "MF";
@@ -574,11 +574,15 @@ function escolherCor(cor) {
   document.querySelector(".color-picker").classList.remove("open");
 }
 
-// fecha o pop-up ao clicar fora
+// fecha pop-ups ao clicar fora (seletor de cor + dropdown de categoria)
 document.addEventListener("click", (e) => {
   const picker = document.querySelector(".color-picker");
   if (picker && picker.classList.contains("open") && !picker.contains(e.target)) {
     picker.classList.remove("open");
+  }
+  const dd = document.getElementById("catDropdown");
+  if (dd && dd.classList.contains("open") && !dd.contains(e.target)) {
+    dd.classList.remove("open");
   }
 });
 
@@ -631,14 +635,32 @@ window.trocarSenha = async function () {
   } finally { btn.disabled = false; btn.textContent = "Atualizar senha"; }
 };
 
-/* ---------- Categorias (Firestore, tempo real) ---------- */
+/* ---------- Categorias (Firestore, tempo real) — modelo novo ---------- */
+// Cada categoria: { nome, cor, descricao, ativa }
+function normalizarCategorias(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(c => {
+    if (typeof c === "string") return { nome: c, cor: "#0a84ff", descricao: "", ativa: true };
+    return { nome: c.nome || "", cor: c.cor || "#0a84ff", descricao: c.descricao || "", ativa: c.ativa !== false };
+  }).filter(c => c.nome);
+}
+
 function escutarCategorias() {
   const ref = doc(db, "usuarios", usuario.uid);
   onSnapshot(ref, (snap) => {
-    categorias = (snap.exists() && snap.data().categorias) || [];
+    categorias = normalizarCategorias(snap.exists() && snap.data().categorias);
     renderCategorias();
-    preencherDatalist();
+    montarFiltroCategorias();
+    renderLegenda();
+    // se a tela de tarefas/calendário estiver aberta, atualiza
+    if (document.getElementById("page-calendario")?.classList.contains("active")) renderCalendar();
   }, (err) => console.error("Erro ao ler categorias:", err));
+}
+
+// busca a cor de uma categoria pelo nome
+function categoriaCor(nome) {
+  const c = categorias.find(x => x.nome === nome);
+  return c ? c.cor : null;
 }
 
 function renderCategorias() {
@@ -646,45 +668,143 @@ function renderCategorias() {
   if (!box) return;
   box.innerHTML = "";
   if (!categorias.length) {
-    box.innerHTML = `<span class="cats-empty">Nenhuma categoria ainda. Adicione abaixo. 👇</span>`;
+    box.innerHTML = `<span class="cats-empty">Nenhuma categoria ainda. Cadastre abaixo. 👇</span>`;
     return;
   }
-  categorias.forEach((c, i) => {
-    const cor = CORES_CAT[i % CORES_CAT.length];
+  categorias.forEach((c, idx) => {
     const el = document.createElement("div");
-    el.className = "cat";
-    el.innerHTML = `<span class="dot" style="background:${cor}"></span><span></span><span class="x" title="Remover">✕</span>`;
-    el.querySelector("span:nth-child(2)").textContent = c;
-    el.querySelector(".x").onclick = () => removerCategoria(c);
+    el.className = "cat-item" + (c.ativa ? "" : " inativa");
+    el.innerHTML = `
+      <span class="ci-dot" style="background:${c.cor}"></span>
+      <div class="ci-texts">
+        <div class="ci-nome"></div>
+        ${c.descricao ? `<div class="ci-desc"></div>` : ""}
+      </div>
+      <button class="ci-toggle ${c.ativa ? "on" : "off"}">${c.ativa ? "Ativa" : "Inativa"}</button>
+      <button class="ci-del" title="Remover">✕</button>`;
+    el.querySelector(".ci-nome").textContent = c.nome;
+    if (c.descricao) el.querySelector(".ci-desc").textContent = c.descricao;
+    el.querySelector(".ci-toggle").onclick = () => toggleCategoriaAtiva(idx);
+    el.querySelector(".ci-del").onclick = () => removerCategoria(idx);
     box.appendChild(el);
   });
 }
 
-function preencherDatalist() {
-  const dl = document.getElementById("catOptions");
-  if (!dl) return;
-  dl.innerHTML = categorias.map(c => `<option value="${escapar(c)}">`).join("");
+async function salvarCategorias(novas) {
+  try {
+    await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
+  } catch (err) { console.error(err); cfgAlert("Não foi possível salvar as categorias.", "error"); }
 }
 
 window.addCategoria = async function () {
-  const i = document.getElementById("newCat");
-  const v = i.value.trim();
-  if (!v) return;
-  if (categorias.some(c => c.toLowerCase() === v.toLowerCase())) {
-    i.value = ""; return cfgAlert("Essa categoria já existe.", "error");
-  }
-  const novas = [...categorias, v];
-  try {
-    await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
-    i.value = "";
-  } catch (err) { console.error(err); cfgAlert("Não foi possível adicionar.", "error"); }
+  const nomeEl = document.getElementById("catNome");
+  const nome = nomeEl.value.trim();
+  const cor = document.getElementById("catCor").value || "#0a84ff";
+  const descricao = document.getElementById("catDesc").value.trim();
+  if (!nome) return cfgAlert("Digite o nome da categoria.", "error");
+  if (categorias.some(c => c.nome.toLowerCase() === nome.toLowerCase()))
+    return cfgAlert("Essa categoria já existe.", "error");
+
+  await salvarCategorias([...categorias, { nome, cor, descricao, ativa: true }]);
+  nomeEl.value = ""; document.getElementById("catDesc").value = "";
+  cfgAlert("Categoria adicionada!", "ok");
 };
 
-async function removerCategoria(nome) {
-  const novas = categorias.filter(c => c !== nome);
-  try {
-    await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
-  } catch (err) { console.error(err); cfgAlert("Não foi possível remover.", "error"); }
+function toggleCategoriaAtiva(idx) {
+  const novas = categorias.map((c, i) => i === idx ? { ...c, ativa: !c.ativa } : c);
+  salvarCategorias(novas);
+}
+
+function removerCategoria(idx) {
+  const c = categorias[idx];
+  if (!confirm(`Remover a categoria "${c.nome}"? As tarefas que a usam continuarão existindo.`)) return;
+  salvarCategorias(categorias.filter((_, i) => i !== idx));
+}
+
+/* ---------- Dropdown de categoria no modal de tarefa ---------- */
+let buscaCatDropdown = "";
+
+window.toggleCatDropdown = function (ev) {
+  if (ev) ev.stopPropagation();
+  const dd = document.getElementById("catDropdown");
+  dd.classList.toggle("open");
+  if (dd.classList.contains("open")) {
+    buscaCatDropdown = "";
+    document.getElementById("catDdSearch").value = "";
+    montarCatDropdown();
+    setTimeout(() => document.getElementById("catDdSearch").focus(), 50);
+  }
+};
+
+window.filtrarCatDropdown = function () {
+  buscaCatDropdown = document.getElementById("catDdSearch").value.trim().toLowerCase();
+  montarCatDropdown();
+};
+
+function montarCatDropdown() {
+  const list = document.getElementById("catDdList");
+  if (!list) return;
+  const ativas = categorias.filter(c => c.ativa &&
+    c.nome.toLowerCase().includes(buscaCatDropdown));
+  list.innerHTML = "";
+  if (!categorias.filter(c => c.ativa).length) {
+    list.innerHTML = `<div class="cat-dd-empty">Nenhuma categoria. Cadastre em Configurações.</div>`;
+    return;
+  }
+  if (!ativas.length) { list.innerHTML = `<div class="cat-dd-empty">Nada encontrado.</div>`; return; }
+  ativas.forEach(c => {
+    const o = document.createElement("div");
+    o.className = "cat-dd-opt";
+    o.innerHTML = `<span class="dd-dot" style="background:${c.cor}"></span><span></span>`;
+    o.querySelector("span:last-child").textContent = c.nome;
+    o.onclick = () => { definirCategoriaSelecionada(c.nome); document.getElementById("catDropdown").classList.remove("open"); };
+    list.appendChild(o);
+  });
+}
+
+// Define a categoria escolhida (atualiza hidden, visual e cor herdada)
+function definirCategoriaSelecionada(nome) {
+  document.getElementById("tkCat").value = nome || "";
+  const cur = document.getElementById("catDdCurrent");
+  const cor = categoriaCor(nome);
+  if (nome) {
+    cur.classList.remove("placeholder");
+    cur.innerHTML = `<span class="dd-dot" style="background:${cor||'#0a84ff'}"></span><span></span>`;
+    cur.querySelector("span:last-child").textContent = nome;
+    // herda a cor da categoria automaticamente
+    if (cor) document.getElementById("tkColor").value = cor;
+  } else {
+    cur.classList.add("placeholder");
+    cur.textContent = "Selecione...";
+  }
+}
+
+/* ---------- Filtro de categoria (calendário) ---------- */
+function montarFiltroCategorias() {
+  const sel = document.getElementById("fltCat");
+  if (!sel) return;
+  const atual = sel.value;
+  sel.innerHTML = `<option value="">Categoria: todas</option>` +
+    categorias.map(c => `<option value="${escapar(c.nome)}">${escapar(c.nome)}</option>`).join("");
+  sel.value = atual; // mantém seleção se ainda existir
+}
+
+/* ---------- Legenda automática (calendário) ---------- */
+function renderLegenda() {
+  const box = document.getElementById("calLegendList");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!categorias.length) {
+    box.innerHTML = `<div class="lg-empty">Cadastre categorias para ver a legenda.</div>`;
+    return;
+  }
+  categorias.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "lg-item" + (c.ativa ? "" : " inativa");
+    el.innerHTML = `<span class="dot" style="background:${c.cor}"></span><span></span>`;
+    el.querySelector("span:last-child").textContent = c.nome;
+    box.appendChild(el);
+  });
 }
 
 /* =========================================================
