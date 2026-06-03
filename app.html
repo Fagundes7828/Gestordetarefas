@@ -204,65 +204,142 @@
       <!-- ===== PÁGINA CONFIGURAÇÕES ===== -->
       <section class="page" id="page-config">
         <div class="section-head"><h2>Configurações</h2></div>
-
         <div class="cfg-alert" id="cfgAlert"></div>
 
-        <!-- BLOCO 1: EDITAR PERFIL -->
-        <div class="cfg-card">
-          <h3>👤 Editar Perfil</h3>
-          <p class="cfg-hint">Seu nome, avatar e senha de acesso.</p>
+        <!-- Abas das Configurações -->
+        <div class="cfg-tabs">
+          <button class="cfg-tab active" data-tab="perfil" onclick="switchCfgTab('perfil')">👤 Perfil</button>
+          <button class="cfg-tab" data-tab="categorias" onclick="switchCfgTab('categorias')">🏷️ Categorias</button>
+          <button class="cfg-tab" data-tab="visualizacoes" onclick="switchCfgTab('visualizacoes')">⚙️ Visualizações</button>
+        </div>
 
-          <div class="avatar-row">
-            <div class="avatar-big" id="cfgAvatar">MF</div>
-            <div>
-              <div class="cfg-label-sm">Cor do avatar</div>
-              <div class="color-picker">
-                <button type="button" class="color-trigger" id="colorTrigger" onclick="toggleColorPopup(event)">
-                  <span class="color-dot" id="colorTriggerDot"></span>
-                  <span class="color-trigger-label">Escolher cor</span>
-                  <span class="color-trigger-chevron">⌄</span>
-                </button>
-                <div class="color-popup" id="colorPopup">
-                  <div class="color-grid" id="colorGrid"></div>
+        <!-- ===== ABA: PERFIL ===== -->
+        <div class="cfg-tab-content active" id="cfgtab-perfil">
+
+          <!-- Meu Perfil -->
+          <div class="cfg-card">
+            <h3>👤 Meu Perfil</h3>
+            <p class="cfg-hint">Nome, avatar e descrição exibidos no sistema.</p>
+            <div class="avatar-row">
+              <div class="avatar-big" id="cfgAvatar">MF</div>
+              <div>
+                <div class="cfg-label-sm">Cor do avatar</div>
+                <div class="color-picker">
+                  <button type="button" class="color-trigger" id="colorTrigger" onclick="toggleColorPopup(event)">
+                    <span class="color-dot" id="colorTriggerDot"></span>
+                    <span class="color-trigger-label">Escolher cor</span>
+                    <span class="color-trigger-chevron">⌄</span>
+                  </button>
+                  <div class="color-popup" id="colorPopup">
+                    <div class="color-grid" id="colorGrid"></div>
+                  </div>
                 </div>
+                <div class="cfg-preview-note">Pré-visualização. A cor só é aplicada ao salvar.</div>
               </div>
-              <div class="cfg-preview-note">Pré-visualização. A cor só é aplicada ao salvar.</div>
             </div>
+            <div class="field">
+              <label for="cfgName">Nome de exibição</label>
+              <input type="text" id="cfgName" placeholder="Seu nome">
+            </div>
+            <div class="field">
+              <label for="cfgBio">Descrição (opcional)</label>
+              <input type="text" id="cfgBio" placeholder="Ex.: Criador de conteúdo, produtor...">
+            </div>
+            <div class="field">
+              <label for="cfgEmail">E-mail</label>
+              <input type="email" id="cfgEmail" disabled>
+            </div>
+            <button class="btn btn-primary" id="btnSaveProfile" onclick="salvarPerfil()">Salvar perfil</button>
           </div>
 
-          <div class="field">
-            <label for="cfgName">Nome de exibição</label>
-            <input type="text" id="cfgName" placeholder="Seu nome">
-          </div>
-          <div class="field">
-            <label for="cfgEmail">E-mail</label>
-            <input type="email" id="cfgEmail" disabled>
-          </div>
-          <button class="btn btn-primary" id="btnSaveProfile" onclick="salvarPerfil()">Salvar perfil</button>
-
-          <!-- Trocar senha (some para contas Google) -->
-          <div class="sub-block" id="passBlock">
-            <div class="sub-title">Trocar senha</div>
-            <div class="field"><label for="cfgPass1">Senha atual</label><input type="password" id="cfgPass1" placeholder="••••••••"></div>
-            <div class="field"><label for="cfgPass2">Nova senha</label><input type="password" id="cfgPass2" placeholder="Mínimo 6 caracteres"></div>
-            <button class="btn btn-soft" id="btnSavePass" onclick="trocarSenha()">Atualizar senha</button>
+          <!-- Método de Conexão -->
+          <div class="cfg-card">
+            <h3>🔐 Método de Conexão</h3>
+            <p class="cfg-hint">Como sua conta está vinculada ao sistema.</p>
+            <div class="conn-info" id="connInfo"></div>
+            <!-- Bloco de senha (só pra e-mail/senha) -->
+            <div class="sub-block" id="passBlock" style="display:none">
+              <div class="sub-title">Trocar senha</div>
+              <div class="field"><label for="cfgPass1">Senha atual</label><input type="password" id="cfgPass1" placeholder="••••••••"></div>
+              <div class="field"><label for="cfgPass2">Nova senha</label><input type="password" id="cfgPass2" placeholder="Mínimo 6 caracteres"></div>
+              <div class="pass-actions">
+                <button class="btn btn-soft" id="btnSavePass" onclick="trocarSenha()">Atualizar senha</button>
+                <button class="btn btn-soft" onclick="recuperarSenha()">Recuperar por e-mail</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- BLOCO 2: CATEGORIAS -->
-        <div class="cfg-card">
-          <h3>🏷️ Categorias</h3>
-          <p class="cfg-hint">Cadastre suas categorias. A cor escolhida é aplicada automaticamente nas tarefas dessa categoria.</p>
-          <div class="cats-list" id="catsList"></div>
-          <div class="cat-form">
-            <div class="cat-form-row">
-              <input type="color" id="catCor" value="#0a84ff" title="Cor da categoria">
-              <input type="text" id="catNome" placeholder="Nome da categoria" onkeydown="if(event.key==='Enter')addCategoria()">
+        <!-- ===== ABA: CATEGORIAS ===== -->
+        <div class="cfg-tab-content" id="cfgtab-categorias">
+          <div class="cfg-card">
+            <h3>📋 Minhas Categorias</h3>
+            <p class="cfg-hint">Gerencie as categorias das suas tarefas.</p>
+            <div class="cats-list" id="catsList"></div>
+          </div>
+          <div class="cfg-card">
+            <h3>➕ Criar Categoria</h3>
+            <p class="cfg-hint">Adicione uma nova categoria com nome, cor e descrição.</p>
+            <div class="cat-form">
+              <div class="cat-form-row">
+                <input type="color" id="catCor" value="#0a84ff" title="Cor da categoria">
+                <input type="text" id="catNome" placeholder="Nome da categoria" onkeydown="if(event.key==='Enter')addCategoria()">
+              </div>
+              <input type="text" id="catDesc" placeholder="Descrição (opcional)">
+              <button class="btn btn-primary" onclick="addCategoria()">Adicionar categoria</button>
             </div>
-            <input type="text" id="catDesc" placeholder="Descrição (opcional)">
-            <button class="btn btn-primary" onclick="addCategoria()">Adicionar categoria</button>
           </div>
         </div>
+
+        <!-- ===== ABA: VISUALIZAÇÕES ===== -->
+        <div class="cfg-tab-content" id="cfgtab-visualizacoes">
+
+          <!-- Tema -->
+          <div class="cfg-card">
+            <h3>🎨 Tema</h3>
+            <p class="cfg-hint">Personalização visual do sistema.</p>
+            <div class="pref-row">
+              <div class="pref-info"><span class="pref-label">Claro / Escuro</span><span class="pref-desc">Implementação em módulo futuro.</span></div>
+              <span class="pref-soon">Em breve</span>
+            </div>
+          </div>
+
+          <!-- Geral -->
+          <div class="cfg-card">
+            <h3>🏠 Preferências Gerais</h3>
+            <p class="cfg-hint">Comportamento padrão ao usar o sistema.</p>
+            <div class="pref-row">
+              <div class="pref-info"><span class="pref-label">Página inicial</span><span class="pref-desc">Tela aberta após o login.</span></div>
+              <select class="pref-select" id="prefHome" onchange="salvarPref('paginaInicial', this.value)">
+                <option value="inicio">Início (Dashboard)</option>
+                <option value="calendario">Calendário</option>
+                <option value="tarefas">Tarefas</option>
+                <option value="roteiros">Roteiros</option>
+              </select>
+            </div>
+            <div class="pref-row">
+              <div class="pref-info"><span class="pref-label">Primeiro dia da semana</span><span class="pref-desc">Define a coluna inicial do calendário.</span></div>
+              <select class="pref-select" id="prefWeekStart" onchange="salvarPref('primeiroDia', this.value); renderCalendar()">
+                <option value="0">Domingo</option>
+                <option value="1">Segunda-feira</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Opções de visualização -->
+          <div class="cfg-card">
+            <h3>📅 Opções de Visualização</h3>
+            <p class="cfg-hint">Personalize o que é exibido no calendário e nas tarefas.</p>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Mostrar fins de semana</span><span class="pref-desc">Exibir sábado e domingo no calendário.</span></div><label class="toggle"><input type="checkbox" id="prefWeekends" onchange="salvarPref('mostrarFDS', this.checked); renderCalendar()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Mostrar tarefas concluídas</span><span class="pref-desc">Exibir tarefas já finalizadas nas listas.</span></div><label class="toggle"><input type="checkbox" id="prefShowDone" onchange="salvarPref('mostrarConcluidas', this.checked); render()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Mostrar indicadores de atraso</span><span class="pref-desc">Exibir tempo de atraso nos cards.</span></div><label class="toggle"><input type="checkbox" id="prefShowLate" onchange="salvarPref('mostrarAtraso', this.checked); render()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Exibir categorias coloridas</span><span class="pref-desc">Aplicar cores das categorias nos cards.</span></div><label class="toggle"><input type="checkbox" id="prefColorCats" onchange="salvarPref('categoriasColoridas', this.checked); render()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Mostrar tarefas finalizadas no calendário</span><span class="pref-desc">Exibir tarefas concluídas na grade do calendário.</span></div><label class="toggle"><input type="checkbox" id="prefCalDone" onchange="salvarPref('calendarConcluidas', this.checked); renderCalendar()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Reduzir brilho de eventos passados</span><span class="pref-desc">Diminuir opacidade de tarefas com prazo vencido.</span></div><label class="toggle"><input type="checkbox" id="prefDimPast" onchange="salvarPref('reduzirPassados', this.checked); renderCalendar()"><span class="tog-slider"></span></label></div>
+            <div class="pref-row"><div class="pref-info"><span class="pref-label">Mostrar número das semanas</span><span class="pref-desc">Exibir o número da semana do ano no calendário.</span></div><label class="toggle"><input type="checkbox" id="prefWeekNum" onchange="salvarPref('numeroDaSemana', this.checked); renderCalendar()"><span class="tog-slider"></span></label></div>
+          </div>
+        </div>
+
       </section>
 
     </main>
