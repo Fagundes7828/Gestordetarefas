@@ -501,33 +501,86 @@ function carregarPerfilUI() {
   document.getElementById("passBlock").style.display = temSenha && !ehGoogle ? "block" : (temSenha ? "block" : "none");
 
   // Cor do avatar salva (no Firestore)
+  montarGridCores();
   getDoc(doc(db, "usuarios", usuario.uid)).then(snap => {
     const c = snap.exists() && snap.data().avatarCor;
     if (c) {
       avatarCor = c;
-      aplicarAvatarCor(c);
-      document.querySelectorAll(".ac").forEach(el => el.classList.toggle("sel", el.dataset.c === c));
+      aplicarAvatarCor(c);   // ao carregar, aplica em menu + preview (é a cor já salva)
+      montarGridCores();
+    } else {
+      aplicarAvatarCor(avatarCor);
     }
   }).catch(()=>{});
 }
 
 function aplicarAvatarCor(cor) {
+  // aplica em AMBOS (menu + preview) — usado só ao carregar e ao salvar
   const grad = `linear-gradient(145deg, ${cor}, ${escurece(cor)})`;
   document.getElementById("sideAvatar").style.background = grad;
   document.getElementById("cfgAvatar").style.background = grad;
+  const dot = document.getElementById("colorTriggerDot");
+  if (dot) dot.style.background = grad;
 }
+function previewAvatarCor(cor) {
+  // #04: aplica SÓ no preview das Configurações (não mexe no menu até salvar)
+  const grad = `linear-gradient(145deg, ${cor}, ${escurece(cor)})`;
+  document.getElementById("cfgAvatar").style.background = grad;
+  const dot = document.getElementById("colorTriggerDot");
+  if (dot) dot.style.background = grad;
+}
+// Escurece qualquer cor hex em ~18% (para o degradê) — funciona com a paleta toda
 function escurece(hex) {
-  // gera um tom um pouco mais escuro para o degradê
-  const m = { "#0a84ff":"#5e5ce6","#34c759":"#2f9e6f","#ff9500":"#ff5e3a","#ff3b30":"#c4291f","#bf5af2":"#8a3fb0" };
-  return m[hex] || hex;
+  hex = (hex || "#0a84ff").replace("#","");
+  if (hex.length === 3) hex = hex.split("").map(c=>c+c).join("");
+  let r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+  const f = 0.82;
+  r = Math.round(r*f); g = Math.round(g*f); b = Math.round(b*f);
+  return "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
 }
 
-window.pickAvatarColor = function (el) {
-  document.querySelectorAll(".ac").forEach(a => a.classList.remove("sel"));
-  el.classList.add("sel");
-  avatarCor = el.dataset.c;
-  aplicarAvatarCor(avatarCor);
+/* ---------- #05: Paleta grande + pop-up de cores ---------- */
+const PALETA_AVATAR = [
+  "#0a84ff","#5e5ce6","#bf5af2","#ff2d55","#ff3b30","#ff9500",
+  "#ffcc00","#34c759","#30d158","#00c7be","#64d2ff","#5856d6",
+  "#af52de","#ff6482","#a2845e","#8e8e93","#48484a","#1c1c1e"
+];
+
+function montarGridCores() {
+  const grid = document.getElementById("colorGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  PALETA_AVATAR.forEach(cor => {
+    const o = document.createElement("div");
+    o.className = "color-opt" + (cor === avatarCor ? " sel" : "");
+    o.style.background = `linear-gradient(145deg, ${cor}, ${escurece(cor)})`;
+    o.dataset.c = cor;
+    o.title = cor;
+    o.onclick = () => escolherCor(cor);
+    grid.appendChild(o);
+  });
+}
+
+window.toggleColorPopup = function (ev) {
+  if (ev) ev.stopPropagation();
+  const picker = document.querySelector(".color-picker");
+  picker.classList.toggle("open");
 };
+
+function escolherCor(cor) {
+  avatarCor = cor;                       // cor pendente
+  previewAvatarCor(cor);                 // #04: só preview, não mexe no menu
+  document.querySelectorAll(".color-opt").forEach(o => o.classList.toggle("sel", o.dataset.c === cor));
+  document.querySelector(".color-picker").classList.remove("open");
+}
+
+// fecha o pop-up ao clicar fora
+document.addEventListener("click", (e) => {
+  const picker = document.querySelector(".color-picker");
+  if (picker && picker.classList.contains("open") && !picker.contains(e.target)) {
+    picker.classList.remove("open");
+  }
+});
 
 /* ---------- Salvar nome + cor do avatar ---------- */
 window.salvarPerfil = async function () {
@@ -543,6 +596,7 @@ window.salvarPerfil = async function () {
     const ini = iniciais(nome);
     document.getElementById("sideAvatar").textContent = ini;
     document.getElementById("cfgAvatar").textContent = ini;
+    aplicarAvatarCor(avatarCor);   // #04: só agora a cor entra no MENU lateral
     cfgAlert("Perfil salvo com sucesso!", "ok");
   } catch (err) {
     console.error(err);
