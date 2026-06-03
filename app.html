@@ -19,8 +19,8 @@
     <!-- ================= MENU LATERAL FIXO ================= -->
     <aside class="sidebar">
       <div class="brand-row">
-        <div class="logo-mark">MF</div>
-        <div>
+        <div class="logo-mark" id="sideAvatar">MF</div>
+        <div class="brand-txt">
           <b>MF Agenda</b>
           <span id="sideUser">...</span>
         </div>
@@ -166,7 +166,57 @@
       <!-- ===== PÁGINA CONFIGURAÇÕES ===== -->
       <section class="page" id="page-config">
         <div class="section-head"><h2>Configurações</h2></div>
-        <div class="empty-state"><div class="big">⚙️</div>Em breve: preferências, categorias e tema.</div>
+
+        <div class="cfg-alert" id="cfgAlert"></div>
+
+        <!-- BLOCO 1: EDITAR PERFIL -->
+        <div class="cfg-card">
+          <h3>👤 Editar Perfil</h3>
+          <p class="cfg-hint">Seu nome, avatar e senha de acesso.</p>
+
+          <div class="avatar-row">
+            <div class="avatar-big" id="cfgAvatar">MF</div>
+            <div>
+              <div class="cfg-label-sm">Cor do avatar</div>
+              <div class="avatar-colors" id="avatarColors">
+                <div class="ac sel" data-c="#0a84ff" style="background:linear-gradient(145deg,#0a84ff,#5e5ce6)" onclick="pickAvatarColor(this)"></div>
+                <div class="ac" data-c="#34c759" style="background:linear-gradient(145deg,#34c759,#2f9e6f)" onclick="pickAvatarColor(this)"></div>
+                <div class="ac" data-c="#ff9500" style="background:linear-gradient(145deg,#ff9500,#ff5e3a)" onclick="pickAvatarColor(this)"></div>
+                <div class="ac" data-c="#ff3b30" style="background:linear-gradient(145deg,#ff3b30,#c4291f)" onclick="pickAvatarColor(this)"></div>
+                <div class="ac" data-c="#bf5af2" style="background:linear-gradient(145deg,#bf5af2,#8a3fb0)" onclick="pickAvatarColor(this)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cfgName">Nome de exibição</label>
+            <input type="text" id="cfgName" placeholder="Seu nome">
+          </div>
+          <div class="field">
+            <label for="cfgEmail">E-mail</label>
+            <input type="email" id="cfgEmail" disabled>
+          </div>
+          <button class="btn btn-primary" id="btnSaveProfile" onclick="salvarPerfil()">Salvar perfil</button>
+
+          <!-- Trocar senha (some para contas Google) -->
+          <div class="sub-block" id="passBlock">
+            <div class="sub-title">Trocar senha</div>
+            <div class="field"><label for="cfgPass1">Senha atual</label><input type="password" id="cfgPass1" placeholder="••••••••"></div>
+            <div class="field"><label for="cfgPass2">Nova senha</label><input type="password" id="cfgPass2" placeholder="Mínimo 6 caracteres"></div>
+            <button class="btn btn-soft" id="btnSavePass" onclick="trocarSenha()">Atualizar senha</button>
+          </div>
+        </div>
+
+        <!-- BLOCO 2: CATEGORIAS -->
+        <div class="cfg-card">
+          <h3>🏷️ Categorias personalizadas</h3>
+          <p class="cfg-hint">Cadastre suas categorias fixas. Elas aparecem prontas ao criar tarefas.</p>
+          <div class="cats" id="catsList"></div>
+          <div class="add-cat">
+            <input type="text" id="newCat" placeholder="Nova categoria..." onkeydown="if(event.key==='Enter')addCategoria()">
+            <button class="btn btn-primary" onclick="addCategoria()">Adicionar</button>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -212,7 +262,8 @@
         <div class="row2">
           <div class="field">
             <label for="tkCat">Categoria</label>
-            <input type="text" id="tkCat" placeholder="Ex.: Gravação">
+            <input type="text" id="tkCat" list="catOptions" placeholder="Ex.: Gravação">
+            <datalist id="catOptions"></datalist>
           </div>
           <div class="field">
             <label for="tkPriority">Prioridade</label>
