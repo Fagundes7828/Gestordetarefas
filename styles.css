@@ -646,3 +646,71 @@ body.app{
 @media (max-width:560px){
   .color-grid{grid-template-columns:repeat(5,1fr)}
 }
+
+/* =========================================================
+   CORREÇÃO #02 — Categorias centralizadas
+   ========================================================= */
+
+/* input de cor nativo (estilizado) */
+input[type=color]{-webkit-appearance:none;appearance:none;border:1px solid var(--glass-border);
+  border-radius:11px;width:46px;height:42px;cursor:pointer;background:rgba(255,255,255,.5);padding:4px}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:7px}
+input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
+
+/* gerenciador de categorias nas Configurações */
+.cats-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.cat-item{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.5);
+  border:1px solid var(--glass-border);border-radius:13px;padding:10px 13px;animation:rise .25s ease both}
+.cat-item.inativa{opacity:.5}
+.cat-item .ci-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.cat-item .ci-texts{flex:1;min-width:0}
+.cat-item .ci-nome{font-size:14px;font-weight:700}
+.cat-item .ci-desc{font-size:11.5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-item .ci-toggle{font-size:11px;font-weight:600;border:none;cursor:pointer;border-radius:8px;padding:5px 10px;transition:.15s}
+.ci-toggle.on{background:rgba(52,199,89,.18);color:#1d7a3a}
+.ci-toggle.off{background:rgba(142,142,147,.2);color:#555}
+.cat-item .ci-del{border:none;background:none;color:var(--text-soft);cursor:pointer;font-size:16px;padding:2px 5px;border-radius:6px}
+.cat-item .ci-del:hover{color:var(--danger);background:rgba(255,59,48,.12)}
+.cats-empty{font-size:13px;color:var(--text-soft)}
+
+.cat-form{display:flex;flex-direction:column;gap:10px}
+.cat-form-row{display:flex;gap:10px}
+.cat-form-row input[type=text]{flex:1}
+.cat-form input[type=text]{font-family:var(--font);font-size:14px;color:var(--text);background:var(--field-bg);
+  border:1px solid var(--glass-border);border-radius:12px;padding:11px 14px}
+.cat-form input[type=text]:focus{outline:none;border-color:var(--blue)}
+
+/* dropdown de categoria (modal de tarefa) com busca */
+.cat-dropdown{position:relative}
+.cat-dd-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--font);font-size:15px;color:var(--text);background:var(--field-bg);
+  border:1px solid var(--glass-border);border-radius:13px;padding:12px 14px;cursor:pointer;backdrop-filter:blur(8px)}
+.cat-dd-trigger:hover{background:rgba(255,255,255,.6)}
+.cat-dd-current{display:flex;align-items:center;gap:9px;min-width:0}
+.cat-dd-current .dd-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.cat-dd-current.placeholder{color:rgba(60,60,67,.45)}
+.cat-dd-chevron{color:var(--text-soft);transition:transform .2s;font-size:14px}
+.cat-dropdown.open .cat-dd-chevron{transform:rotate(180deg)}
+.cat-dd-popup{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;display:none;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:14px;padding:10px;
+  box-shadow:0 18px 44px -14px rgba(40,30,90,.5);animation:rise .16s ease both}
+.cat-dropdown.open .cat-dd-popup{display:block}
+.cat-dd-popup input{width:100%;font-family:var(--font);font-size:14px;border:1px solid var(--glass-border);
+  border-radius:10px;padding:9px 12px;margin-bottom:8px;background:rgba(255,255,255,.7)}
+.cat-dd-popup input:focus{outline:none;border-color:var(--blue)}
+.cat-dd-list{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.cat-dd-opt{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;transition:.12s}
+.cat-dd-opt:hover{background:rgba(10,132,255,.1)}
+.cat-dd-opt .dd-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.cat-dd-empty{font-size:13px;color:var(--text-soft);padding:10px;text-align:center}
+
+/* cor herdada no modal */
+.color-inherit{display:flex;align-items:center;gap:12px}
+.color-inherit-note{font-size:12px;color:var(--text-soft)}
+
+/* itens da legenda dinâmica */
+#calLegendList{display:flex;flex-direction:column;gap:2px}
+.lg-empty{font-size:12px;color:var(--text-soft);font-style:italic}
