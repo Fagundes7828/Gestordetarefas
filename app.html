@@ -125,9 +125,10 @@
             <option value="alta">Alta</option>
             <option value="critica">Crítica</option>
           </select>
-          <input type="text" id="fltCat" placeholder="Categoria..." oninput="renderCalendar()">
+          <select id="fltCat" onchange="renderCalendar()">
+            <option value="">Categoria: todas</option>
+          </select>
           <input type="text" id="fltProject" placeholder="Projeto..." oninput="renderCalendar()">
-          <input type="text" id="fltColor" list="colorList" placeholder="Cor..." oninput="renderCalendar()" style="display:none">
         </div>
 
         <div class="cal-layout">
@@ -139,15 +140,10 @@
             <div class="cal-grid" id="calGrid"></div>
           </div>
 
-          <!-- Legenda lateral -->
+          <!-- Legenda lateral (gerada automaticamente pelas categorias) -->
           <aside class="cal-legend">
             <h3>Legenda</h3>
-            <div class="lg-item"><span class="dot" style="background:#34c759"></span> Concluído</div>
-            <div class="lg-item"><span class="dot" style="background:#ff9500"></span> Em andamento</div>
-            <div class="lg-item"><span class="dot" style="background:#ff3b30"></span> Crítico</div>
-            <div class="lg-item"><span class="dot" style="background:#0a84ff"></span> Projeto</div>
-            <div class="lg-item"><span class="dot" style="background:#bf5af2"></span> Conteúdo</div>
-            <div class="lg-item"><span class="dot" style="background:#8e8e93"></span> Arquivado</div>
+            <div id="calLegendList"></div>
             <div class="lg-sep"></div>
             <div class="lg-note">As tarefas aparecem no <b>dia de início</b> e no <b>dia de conclusão</b>.</div>
           </aside>
@@ -255,12 +251,16 @@
 
         <!-- BLOCO 2: CATEGORIAS -->
         <div class="cfg-card">
-          <h3>🏷️ Categorias personalizadas</h3>
-          <p class="cfg-hint">Cadastre suas categorias fixas. Elas aparecem prontas ao criar tarefas.</p>
-          <div class="cats" id="catsList"></div>
-          <div class="add-cat">
-            <input type="text" id="newCat" placeholder="Nova categoria..." onkeydown="if(event.key==='Enter')addCategoria()">
-            <button class="btn btn-primary" onclick="addCategoria()">Adicionar</button>
+          <h3>🏷️ Categorias</h3>
+          <p class="cfg-hint">Cadastre suas categorias. A cor escolhida é aplicada automaticamente nas tarefas dessa categoria.</p>
+          <div class="cats-list" id="catsList"></div>
+          <div class="cat-form">
+            <div class="cat-form-row">
+              <input type="color" id="catCor" value="#0a84ff" title="Cor da categoria">
+              <input type="text" id="catNome" placeholder="Nome da categoria" onkeydown="if(event.key==='Enter')addCategoria()">
+            </div>
+            <input type="text" id="catDesc" placeholder="Descrição (opcional)">
+            <button class="btn btn-primary" onclick="addCategoria()">Adicionar categoria</button>
           </div>
         </div>
       </section>
@@ -307,9 +307,18 @@
         </div>
         <div class="row2">
           <div class="field">
-            <label for="tkCat">Categoria</label>
-            <input type="text" id="tkCat" list="catOptions" placeholder="Ex.: Gravação">
-            <datalist id="catOptions"></datalist>
+            <label>Categoria</label>
+            <div class="cat-dropdown" id="catDropdown">
+              <button type="button" class="cat-dd-trigger" id="catDdTrigger" onclick="toggleCatDropdown(event)">
+                <span class="cat-dd-current" id="catDdCurrent">Selecione...</span>
+                <span class="cat-dd-chevron">⌄</span>
+              </button>
+              <div class="cat-dd-popup" id="catDdPopup">
+                <input type="text" id="catDdSearch" placeholder="Buscar categoria..." oninput="filtrarCatDropdown()">
+                <div class="cat-dd-list" id="catDdList"></div>
+              </div>
+            </div>
+            <input type="hidden" id="tkCat">
           </div>
           <div class="field">
             <label for="tkPriority">Prioridade</label>
@@ -353,13 +362,10 @@
           </div>
         </div>
         <div class="field">
-          <label>Cor de identificação</label>
-          <div class="swatches" id="tkSwatches">
-            <div class="sw sel" data-color="#0a84ff" style="background:#0a84ff" onclick="pickColor(this)"></div>
-            <div class="sw" data-color="#34c759" style="background:#34c759" onclick="pickColor(this)"></div>
-            <div class="sw" data-color="#ff9500" style="background:#ff9500" onclick="pickColor(this)"></div>
-            <div class="sw" data-color="#ff3b30" style="background:#ff3b30" onclick="pickColor(this)"></div>
-            <div class="sw" data-color="#bf5af2" style="background:#bf5af2" onclick="pickColor(this)"></div>
+          <label for="tkColor">Cor de identificação</label>
+          <div class="color-inherit">
+            <input type="color" id="tkColor" value="#0a84ff">
+            <span class="color-inherit-note">Vem da categoria — você pode personalizar.</span>
           </div>
         </div>
       </div>
