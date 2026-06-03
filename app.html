@@ -77,10 +77,10 @@
 
         <!-- Resumo geral -->
         <div class="summary">
-          <div class="stat s-total"><div class="label">Total de tarefas</div><div class="value" id="stTotal">0</div></div>
-          <div class="stat s-done"><div class="label">Concluídas</div><div class="value" id="stDone">0</div></div>
-          <div class="stat s-pend"><div class="label">Pendentes</div><div class="value" id="stPend">0</div></div>
-          <div class="stat s-late"><div class="label">Atrasadas</div><div class="value" id="stLate">0</div></div>
+          <div class="stat s-total clickable" onclick="irParaTarefas('todas')"><div class="label">Total de tarefas</div><div class="value" id="stTotal">0</div></div>
+          <div class="stat s-done clickable" onclick="irParaTarefas('concluida')"><div class="label">Concluídas</div><div class="value" id="stDone">0</div></div>
+          <div class="stat s-pend clickable" onclick="irParaTarefas('pendente')"><div class="label">Pendentes</div><div class="value" id="stPend">0</div></div>
+          <div class="stat s-late clickable" onclick="irParaTarefas('atrasada')"><div class="label">Atrasadas</div><div class="value" id="stLate">0</div></div>
           <div class="stat s-rate">
             <div class="label">Taxa de conclusão</div>
             <div class="value" id="stRate">0%</div>
@@ -157,10 +157,52 @@
       <!-- ===== PÁGINA TAREFAS ===== -->
       <section class="page" id="page-tarefas">
         <div class="section-head">
-          <h2>Todas as tarefas</h2>
-          <span class="count" id="allCount"></span>
+          <h2>Tarefas</h2>
         </div>
-        <div class="cards" id="allCards"></div>
+
+        <!-- Barra de pesquisa -->
+        <div class="task-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+          <input type="text" id="taskSearch" placeholder="Buscar por nome, categoria, projeto ou descrição..." oninput="renderTarefasAccordion()">
+          <button class="search-clear" id="searchClear" onclick="limparBusca()" style="display:none">✕</button>
+        </div>
+
+        <!-- Accordion de categorias -->
+        <div class="accordion" id="accordion">
+
+          <div class="acc-group" data-cat="todas">
+            <button class="acc-head" onclick="toggleAcc('todas')">
+              <span class="acc-left"><span class="acc-ind"></span><span class="acc-name">Todas as Tarefas</span></span>
+              <span class="acc-right"><span class="acc-count" id="cntTodas">0</span><span class="acc-chevron">⌄</span></span>
+            </button>
+            <div class="acc-body"><div class="cards" id="cardsTodas"></div></div>
+          </div>
+
+          <div class="acc-group" data-cat="pendente">
+            <button class="acc-head" onclick="toggleAcc('pendente')">
+              <span class="acc-left"><span class="acc-ind"></span><span class="acc-name">Pendentes</span></span>
+              <span class="acc-right"><span class="acc-count" id="cntPendente">0</span><span class="acc-chevron">⌄</span></span>
+            </button>
+            <div class="acc-body"><div class="cards" id="cardsPendente"></div></div>
+          </div>
+
+          <div class="acc-group" data-cat="concluida">
+            <button class="acc-head" onclick="toggleAcc('concluida')">
+              <span class="acc-left"><span class="acc-ind"></span><span class="acc-name">Concluídas</span></span>
+              <span class="acc-right"><span class="acc-count" id="cntConcluida">0</span><span class="acc-chevron">⌄</span></span>
+            </button>
+            <div class="acc-body"><div class="cards" id="cardsConcluida"></div></div>
+          </div>
+
+          <div class="acc-group" data-cat="atrasada">
+            <button class="acc-head" onclick="toggleAcc('atrasada')">
+              <span class="acc-left"><span class="acc-ind"></span><span class="acc-name">Atrasadas</span></span>
+              <span class="acc-right"><span class="acc-count" id="cntAtrasada">0</span><span class="acc-chevron">⌄</span></span>
+            </button>
+            <div class="acc-body"><div class="cards" id="cardsAtrasada"></div></div>
+          </div>
+
+        </div>
       </section>
 
       <!-- ===== PÁGINA CONFIGURAÇÕES ===== -->
