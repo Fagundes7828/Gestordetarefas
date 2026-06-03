@@ -194,7 +194,12 @@ body.app{
 .main{flex:1;min-width:0;padding:6px 8px 40px}
 
 /* ---------- Cabeçalho ---------- */
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:26px;flex-wrap:wrap}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap;
+  position:sticky;top:18px;z-index:40;
+  background:var(--glass);backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:20px;padding:16px 22px;
+  box-shadow:0 12px 30px -14px rgba(40,30,90,.3);}
 .clock-box{display:flex;align-items:center;gap:14px}
 .clock-info .weekday{font-size:22px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize}
 .clock-info .fulldate{font-size:14px;color:var(--text-soft);margin-top:1px}
@@ -473,4 +478,60 @@ body.app{
   .cal-ev::before{content:"";display:block;width:100%;height:4px;border-radius:3px}
   .cal-num{font-size:12px;width:22px;height:22px}
   .cal-title{font-size:16px;min-width:130px}
+}
+
+/* =========================================================
+   AJUSTE: alinhamento do nome na sidebar
+   ========================================================= */
+.brand-txt{display:flex;flex-direction:column;justify-content:center;min-width:0;line-height:1.2}
+.brand-txt b{font-size:16.5px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.brand-txt span{font-size:12px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;display:block}
+
+/* =========================================================
+   MÓDULO 4 — CONFIGURAÇÕES
+   ========================================================= */
+.cfg-alert{display:none;border-radius:13px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;font-weight:500}
+.cfg-alert.show{display:block;animation:rise .3s ease both}
+.cfg-alert.ok{background:rgba(52,199,89,.14);color:#1d7a3a;border:1px solid rgba(52,199,89,.3)}
+.cfg-alert.error{background:rgba(255,59,48,.12);color:#c4291f;border:1px solid rgba(255,59,48,.25)}
+
+.cfg-card{
+  background:var(--glass);backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:22px;padding:22px;margin-bottom:18px;max-width:620px;
+  box-shadow:0 14px 36px -18px rgba(40,30,90,.3);
+}
+.cfg-card h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.cfg-hint{font-size:12.5px;color:var(--text-soft);margin-bottom:16px}
+.cfg-label-sm{font-size:12px;font-weight:600;color:var(--text-soft);margin-bottom:7px}
+
+.avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.avatar-big{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:700;
+  background:linear-gradient(145deg,var(--blue),#5e5ce6);box-shadow:0 10px 22px -8px rgba(10,132,255,.6);flex-shrink:0}
+.avatar-colors{display:flex;gap:8px;flex-wrap:wrap}
+.ac{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.12s}
+.ac.sel{border-color:var(--text)}
+
+.cfg-card .field input:disabled{opacity:.55;cursor:not-allowed}
+
+.btn-soft{background:rgba(255,255,255,.5);color:var(--text);border:1px solid var(--glass-border);
+  font-family:var(--font);font-size:14.5px;font-weight:600;cursor:pointer;border-radius:13px;padding:12px 22px;transition:.16s}
+.btn-soft:hover{background:rgba(255,255,255,.8)}
+
+.sub-block{border-top:1px solid rgba(60,60,67,.12);margin-top:18px;padding-top:16px}
+.sub-title{font-size:14px;font-weight:700;margin-bottom:12px}
+
+.cats{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;min-height:10px}
+.cat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.55);border:1px solid var(--glass-border);
+  border-radius:11px;padding:8px 12px;font-size:13.5px;font-weight:600;animation:rise .25s ease both}
+.cat .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cat .x{cursor:pointer;color:var(--text-soft);font-weight:700;margin-left:2px}
+.cat .x:hover{color:var(--danger)}
+.cats-empty{font-size:13px;color:var(--text-soft)}
+.add-cat{display:flex;gap:8px}
+.add-cat input{flex:1;font-family:var(--font);font-size:14px;color:var(--text);background:var(--field-bg);
+  border:1px solid var(--glass-border);border-radius:12px;padding:11px 14px}
+.add-cat input:focus{outline:none;border-color:var(--blue)}
+
+@media (max-width:760px){
+  .topbar{top:0;border-radius:0 0 18px 18px}
 }
