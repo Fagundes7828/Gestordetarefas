@@ -43,6 +43,7 @@ onAuthStateChanged(auth, (user) => {
   escutarCategorias();
   escutarTarefas();
   carregarPrefs();
+  escutarRoteiros();
 });
 
 window.sair = async () => { await signOut(auth); window.location.href = "index.html"; };
@@ -495,7 +496,7 @@ function escapar(s) {
 /* ---------- Fechar modais (clique fora / Esc) ---------- */
 document.getElementById("taskOverlay").addEventListener("click", e => { if (e.target.id==="taskOverlay") closeTaskModal(); });
 document.getElementById("dayOverlay").addEventListener("click", e => { if (e.target.id==="dayOverlay") closeDayModal(); });
-document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModal(); closeDayModal(); closeTaskDetail(); } });
+document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModal(); closeDayModal(); closeTaskDetail(); closeRoteiroModal(); closeRoteiroDetail(); } });
 
 /* =========================================================
    MÓDULO 4 — CONFIGURAÇÕES
@@ -1124,3 +1125,194 @@ function aplicarPrefsCalendario() {
   if (grid) grid.classList.toggle("hide-fds", !prefs.mostrarFDS);
   if (wdays) wdays.classList.toggle("hide-fds", !prefs.mostrarFDS);
 }
+
+/* =========================================================
+   MÓDULO 6B — ROTEIROS
+   ========================================================= */
+
+let roteiros = [];
+let roteiroEditandoId = null;
+
+const RT_STATUS = {
+  elaboracao: "Em elaboração",
+  pronto: "Pronto para gravação",
+  gravado: "Gravado",
+  finalizado: "Finalizado"
+};
+const RT_COR = {
+  elaboracao: "#0a84ff",
+  pronto: "#ff9500",
+  gravado: "#bf5af2",
+  finalizado: "#34c759"
+};
+
+/* ---------- Navegação: botão dinâmico no topbar ---------- */
+const _goPageOrig = window.goPage;
+window.goPage = function (page) {
+  _goPageOrig(page);
+  const btn = document.getElementById("btnTopbar");
+  if (!btn) return;
+  if (page === "roteiros") {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Roteiro`;
+    btn.onclick = () => openRoteiroModal();
+  } else {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Tarefa`;
+    btn.onclick = () => openTaskModal();
+  }
+};
+
+/* ---------- Firestore: escutar roteiros ---------- */
+function escutarRoteiros() {
+  const ref = collection(db, "usuarios", usuario.uid, "roteiros");
+  const q = query(ref, orderBy("criadoEm", "desc"));
+  onSnapshot(q, (snap) => {
+    roteiros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderRoteiros();
+    atualizarContadorRoteiros();
+  }, err => console.error("Erro ao ler roteiros:", err));
+}
+
+function atualizarContadorRoteiros() {
+  const el = document.getElementById("roteirosCount");
+  if (el) el.textContent = roteiros.length ? `${roteiros.length} roteiro(s)` : "";
+}
+
+/* ---------- Render dos cards ---------- */
+window.renderRoteiros = function () {
+  const fltStatus = document.getElementById("roteiroFltStatus")?.value || "";
+  let lista = fltStatus ? roteiros.filter(r => r.status === fltStatus) : roteiros;
+  const grid = document.getElementById("roteirosGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  if (!lista.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">📝</div>${fltStatus ? "Nenhum roteiro com esse status." : "Nenhum roteiro criado ainda. Clique em \"Criar Roteiro\" para começar."}</div>`;
+    return;
+  }
+  lista.forEach(r => grid.appendChild(cardRoteiro(r)));
+};
+
+function cardRoteiro(r) {
+  const cor = RT_COR[r.status] || "#0a84ff";
+  const statusCls = "rs-" + (r.status || "elaboracao");
+  const dataGrav = r.dataGravacao ? new Date(r.dataGravacao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "—";
+  const criado = r.criadoEm?.toDate ? r.criadoEm.toDate().toLocaleDateString("pt-BR") : "—";
+  const atualiz = r.atualizadoEm?.toDate ? r.atualizadoEm.toDate().toLocaleDateString("pt-BR") : criado;
+
+  const el = document.createElement("div");
+  el.className = "roteiro-card";
+  el.style.borderLeftColor = cor;
+  el.onclick = () => openRoteiroDetail(r.id);
+  el.innerHTML = `
+    <div class="rc-head">
+      <span class="rc-status ${statusCls}">${RT_STATUS[r.status]||r.status}</span>
+      <span class="rc-date">📅 ${dataGrav}</span>
+    </div>
+    <div class="rc-title"></div>
+    <div class="rc-meta">Criado em ${criado} · Atualizado: ${atualiz}</div>
+    <div class="rc-actions">
+      <button class="dt-btn dt-edit">✎ Editar</button>
+      ${r.status !== "finalizado" ? `<button class="dt-btn dt-done">✓ Finalizar</button>` : ""}
+      <button class="dt-btn dt-del">🗑 Excluir</button>
+    </div>`;
+  el.querySelector(".rc-title").textContent = r.titulo;
+  el.querySelector(".dt-edit").onclick = e => { e.stopPropagation(); openRoteiroModal(r); };
+  if (r.status !== "finalizado") el.querySelector(".dt-done").onclick = e => { e.stopPropagation(); finalizarRoteiro(r.id); };
+  el.querySelector(".dt-del").onclick = e => { e.stopPropagation(); excluirRoteiro(r.id); };
+  return el;
+}
+
+/* ---------- Modal de criação / edição ---------- */
+window.openRoteiroModal = function (roteiro = null) {
+  roteiroEditandoId = roteiro ? roteiro.id : null;
+  document.getElementById("roteiroModalTitle").textContent = roteiro ? "Editar Roteiro" : "Novo Roteiro";
+  document.getElementById("btnSalvarRoteiro").textContent = "Salvar Roteiro";
+  document.getElementById("roteiroAlert").className = "alert";
+  document.getElementById("rtTitulo").value = roteiro?.titulo || "";
+  document.getElementById("rtData").value = roteiro?.dataGravacao || dataHojeISO();
+  document.getElementById("rtStatus").value = roteiro?.status || "elaboracao";
+  document.getElementById("roteiroEditor").innerHTML = roteiro?.conteudo || "";
+  document.getElementById("roteiroOverlay").style.display = "flex";
+  setTimeout(() => document.getElementById("rtTitulo").focus(), 50);
+};
+
+window.closeRoteiroModal = () => {
+  document.getElementById("roteiroOverlay").style.display = "none";
+  roteiroEditandoId = null;
+};
+
+window.salvarRoteiro = async function () {
+  const titulo = document.getElementById("rtTitulo").value.trim();
+  const dataGravacao = document.getElementById("rtData").value;
+  const conteudo = document.getElementById("roteiroEditor").innerHTML;
+  const a = document.getElementById("roteiroAlert");
+
+  if (!titulo) { a.textContent = "Dê um título ao roteiro."; a.className = "alert show error"; return; }
+  if (!dataGravacao) { a.textContent = "Informe a data da gravação."; a.className = "alert show error"; return; }
+
+  const dados = {
+    titulo,
+    dataGravacao,
+    conteudo,
+    status: document.getElementById("rtStatus").value,
+    atualizadoEm: serverTimestamp()
+  };
+  const btn = document.getElementById("btnSalvarRoteiro");
+  btn.disabled = true; btn.textContent = "Salvando...";
+  try {
+    if (roteiroEditandoId) {
+      await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", roteiroEditandoId), dados);
+    } else {
+      dados.criadoEm = serverTimestamp();
+      await addDoc(collection(db, "usuarios", usuario.uid, "roteiros"), dados);
+    }
+    closeRoteiroModal();
+  } catch (err) {
+    console.error(err); a.textContent = "Não foi possível salvar."; a.className = "alert show error";
+  } finally { btn.disabled = false; btn.textContent = "Salvar Roteiro"; }
+};
+
+/* ---------- Ações nos cards ---------- */
+async function finalizarRoteiro(id) {
+  try { await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", id), { status:"finalizado", atualizadoEm:serverTimestamp() }); }
+  catch (err) { console.error(err); }
+}
+
+async function excluirRoteiro(id) {
+  if (!confirm("Excluir este roteiro? Esta ação não pode ser desfeita.")) return;
+  try { await deleteDoc(doc(db, "usuarios", usuario.uid, "roteiros", id)); closeRoteiroDetail(); }
+  catch (err) { console.error(err); }
+}
+
+/* ---------- Modal de visualização completa ---------- */
+window.openRoteiroDetail = function (id) {
+  const r = roteiros.find(x => x.id === id);
+  if (!r) return;
+  const cor = RT_COR[r.status] || "#0a84ff";
+  document.getElementById("rdColorBar").style.background = cor;
+  document.getElementById("rdTitulo").textContent = r.titulo;
+  document.getElementById("rdStatus").textContent = RT_STATUS[r.status] || r.status;
+  document.getElementById("rdData").textContent = r.dataGravacao
+    ? "📅 " + new Date(r.dataGravacao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "—";
+  document.getElementById("rdCriado").textContent = r.criadoEm?.toDate ? r.criadoEm.toDate().toLocaleDateString("pt-BR") : "—";
+  document.getElementById("rdAtualizado").textContent = r.atualizadoEm?.toDate ? r.atualizadoEm.toDate().toLocaleDateString("pt-BR") : "—";
+  document.getElementById("rdConteudo").innerHTML = r.conteudo || "<em>Sem conteúdo.</em>";
+
+  document.getElementById("rdBtnEdit").onclick = () => { closeRoteiroDetail(); openRoteiroModal(r); };
+  const btnFin = document.getElementById("rdBtnFinalizar");
+  btnFin.style.display = r.status === "finalizado" ? "none" : "flex";
+  btnFin.onclick = () => { finalizarRoteiro(r.id); closeRoteiroDetail(); };
+  document.getElementById("rdBtnExcluir").onclick = () => excluirRoteiro(r.id);
+
+  document.getElementById("roteiroDetailOverlay").style.display = "flex";
+};
+window.closeRoteiroDetail = () => { document.getElementById("roteiroDetailOverlay").style.display = "none"; };
+
+/* ---------- Toolbar do editor ---------- */
+window.fmt = function (cmd) {
+  document.getElementById("roteiroEditor").focus();
+  document.execCommand(cmd, false, null);
+};
+
+/* ---------- Fechar com Esc e clique fora ---------- */
+document.getElementById("roteiroOverlay").addEventListener("click", e => { if (e.target.id==="roteiroOverlay") closeRoteiroModal(); });
+document.getElementById("roteiroDetailOverlay").addEventListener("click", e => { if (e.target.id==="roteiroDetailOverlay") closeRoteiroDetail(); });
