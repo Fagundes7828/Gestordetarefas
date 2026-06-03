@@ -239,8 +239,9 @@ function card(t) {
   const lv = nivel(t); const d = diasDeAtraso(t.conclusao);
   const statusCls = { pendente:"st-pendente", andamento:"st-andamento", concluida:"st-concluida" }[t.status] || "st-pendente";
   const el = document.createElement("div");
-  el.className = "task-card lv-" + lv;
+  el.className = "task-card lv-" + lv + " clickable";
   el.style.borderLeftColor = t.cor || "var(--blue)";
+  el.onclick = () => openTaskDetail(t.id);
   const dueTxt = t.conclusao ? new Date(t.conclusao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "sem prazo";
   el.innerHTML = `
     <button class="tc-check" title="Marcar como concluída">
@@ -256,8 +257,9 @@ function card(t) {
   el.querySelector(".tc-title").textContent = t.titulo;
   el.querySelector(".tc-cat").textContent = t.categoria || "Geral";
   el.querySelector(".tc-body").textContent = t.descricao || "Sem descrição.";
-  if (t.status !== "concluida") el.querySelector(".tc-check").onclick = () => concluir(t.id);
-  else el.querySelector(".tc-check").style.display = "none";
+  if (t.status !== "concluida") {
+    el.querySelector(".tc-check").onclick = e => { e.stopPropagation(); concluir(t.id); };
+  } else { el.querySelector(".tc-check").style.display = "none"; }
   return el;
 }
 
@@ -423,8 +425,9 @@ window.closeDayModal = () => { document.getElementById("dayOverlay").style.displ
 
 function dayTaskCard(t) {
   const el = document.createElement("div");
-  el.className = "day-task";
+  el.className = "day-task clickable";
   el.style.borderLeftColor = t.cor || "#0a84ff";
+  el.onclick = () => { closeDayModal(); openTaskDetail(t.id); };
   const criado = t.criadoEm?.toDate ? t.criadoEm.toDate().toLocaleDateString("pt-BR") : "—";
   const concl = t.conclusao ? new Date(t.conclusao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "—";
   el.innerHTML = `
@@ -440,7 +443,6 @@ function dayTaskCard(t) {
       ${t.projeto ? `<span class="dt-badge">📁 ${escapar(t.projeto)}</span>` : ""}
     </div>
     <div class="dt-desc"></div>
-    <div class="dt-info">Criada em ${criado} · Conclusão prevista: ${concl}</div>
     <div class="dt-actions">
       <button class="dt-btn dt-edit">✎ Editar</button>
       ${t.status!=="concluida" ? `<button class="dt-btn dt-done">✓ Concluir</button>` : ""}
@@ -450,10 +452,10 @@ function dayTaskCard(t) {
   el.querySelector(".dt-name").textContent = t.titulo;
   el.querySelector(".dt-badges .dt-badge").textContent = t.categoria || "Geral";
   el.querySelector(".dt-desc").textContent = t.descricao || "Sem descrição.";
-  el.querySelector(".dt-edit").onclick = () => editarTarefa(t.id);
-  if (t.status!=="concluida") el.querySelector(".dt-done").onclick = () => { concluir(t.id); closeDayModal(); };
-  el.querySelector(".dt-dup").onclick = () => duplicar(t.id);
-  el.querySelector(".dt-del").onclick = () => excluir(t.id);
+  el.querySelector(".dt-edit").onclick = e => { e.stopPropagation(); closeDayModal(); openTaskModal(tarefas.find(x=>x.id===t.id)); };
+  if (t.status!=="concluida") el.querySelector(".dt-done").onclick = e => { e.stopPropagation(); concluir(t.id); closeDayModal(); };
+  el.querySelector(".dt-dup").onclick = e => { e.stopPropagation(); duplicar(t.id); };
+  el.querySelector(".dt-del").onclick = e => { e.stopPropagation(); excluir(t.id); };
   return el;
 }
 
@@ -464,7 +466,7 @@ function escapar(s) {
 /* ---------- Fechar modais (clique fora / Esc) ---------- */
 document.getElementById("taskOverlay").addEventListener("click", e => { if (e.target.id==="taskOverlay") closeTaskModal(); });
 document.getElementById("dayOverlay").addEventListener("click", e => { if (e.target.id==="dayOverlay") closeDayModal(); });
-document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModal(); closeDayModal(); } });
+document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModal(); closeDayModal(); closeTaskDetail(); } });
 
 /* =========================================================
    MÓDULO 4 — CONFIGURAÇÕES
@@ -900,8 +902,9 @@ function cardTarefa(t) {
   const limite = t.conclusao ? new Date(t.conclusao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "sem prazo";
 
   const el = document.createElement("div");
-  el.className = "task-card lv-" + lv;
+  el.className = "task-card lv-" + lv + " clickable";
   el.style.borderLeftColor = t.cor || "var(--blue)";
+  el.onclick = () => openTaskDetail(t.id);
   el.innerHTML = `
     <div class="tc-head"><div class="tc-title"></div><span class="tc-cat"></span></div>
     <div class="tc-badges">
@@ -922,9 +925,80 @@ function cardTarefa(t) {
     </div>`;
   el.querySelector(".tc-title").textContent = t.titulo;
   el.querySelector(".tc-cat").textContent = t.categoria || "Geral";
-  el.querySelector(".dt-edit").onclick = () => openTaskModal(t);
-  if (t.status!=="concluida") el.querySelector(".dt-done").onclick = () => concluir(t.id);
-  el.querySelector(".dt-dup").onclick = () => duplicar(t.id);
-  el.querySelector(".dt-del").onclick = () => excluir(t.id);
+  // stopPropagation nos botões pra não disparar o onclick do card
+  el.querySelector(".dt-edit").onclick = e => { e.stopPropagation(); openTaskModal(t); };
+  if (t.status!=="concluida") el.querySelector(".dt-done").onclick = e => { e.stopPropagation(); concluir(t.id); };
+  el.querySelector(".dt-dup").onclick = e => { e.stopPropagation(); duplicar(t.id); };
+  el.querySelector(".dt-del").onclick = e => { e.stopPropagation(); excluir(t.id); };
   return el;
 }
+
+/* =========================================================
+   CORREÇÃO #01 — Task Detail View
+   ========================================================= */
+
+window.openTaskDetail = function (id) {
+  const t = tarefas.find(x => x.id === id);
+  if (!t) return;
+
+  // barra de cor
+  const bar = document.getElementById("detailColorBar");
+  bar.style.background = t.cor || "#0a84ff";
+
+  // título
+  document.getElementById("detailTitle").textContent = t.titulo;
+
+  // badges: categoria + status + prioridade
+  const catBadge = document.getElementById("detailCatBadge");
+  catBadge.textContent = t.categoria || "Sem categoria";
+  catBadge.style.background = t.cor || "#0a84ff";
+
+  const statusMap = { pendente:"Pendente", andamento:"Em andamento", concluida:"Concluída" };
+  document.getElementById("detailStatusBadge").textContent = statusMap[t.status] || t.status;
+  document.getElementById("detailPriBadge").textContent = PRIOR[t.prioridade] || t.prioridade;
+
+  // descrição completa
+  const descEl = document.getElementById("detailDesc");
+  if (t.descricao?.trim()) {
+    descEl.textContent = t.descricao;
+    descEl.classList.remove("sem-desc");
+  } else {
+    descEl.textContent = "Nenhuma descrição cadastrada.";
+    descEl.classList.add("sem-desc");
+  }
+
+  // informações em grade
+  const fmt = iso => iso ? new Date(iso).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "—";
+  document.getElementById("detailProject").textContent = t.projeto || "—";
+  document.getElementById("detailStart").textContent = fmt(t.inicio);
+  document.getElementById("detailDue").textContent = fmt(t.conclusao);
+  document.getElementById("detailTime").textContent = t.hora || "—";
+  const criadoEm = t.criadoEm?.toDate ? t.criadoEm.toDate().toLocaleDateString("pt-BR") : "—";
+  document.getElementById("detailCreated").textContent = criadoEm;
+  const d = diasDeAtraso(t.conclusao);
+  document.getElementById("detailLate").textContent = t.status === "concluida" ? "✓ Concluída" : (textoAtraso(d) || "—");
+
+  // botões de ação
+  document.getElementById("detailBtnEdit").onclick = () => { closeTaskDetail(); openTaskModal(t); };
+  const btnDone = document.getElementById("detailBtnDone");
+  if (t.status === "concluida") {
+    btnDone.style.display = "none";
+  } else {
+    btnDone.style.display = "flex";
+    btnDone.onclick = () => { concluir(t.id); closeTaskDetail(); };
+  }
+  document.getElementById("detailBtnDup").onclick = () => { duplicar(t.id); closeTaskDetail(); };
+  document.getElementById("detailBtnDel").onclick = () => excluir(t.id);
+
+  document.getElementById("detailOverlay").style.display = "flex";
+};
+
+window.closeTaskDetail = () => {
+  document.getElementById("detailOverlay").style.display = "none";
+};
+
+// fecha com Esc e clique fora
+document.getElementById("detailOverlay").addEventListener("click", e => {
+  if (e.target.id === "detailOverlay") closeTaskDetail();
+});
+// (o Esc já fecha todos via listener existente — extend ele)
