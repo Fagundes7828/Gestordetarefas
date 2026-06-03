@@ -766,3 +766,76 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
   .detail-foot{gap:6px}
   .detail-foot .dt-btn{flex:1}
 }
+
+/* =========================================================
+   MÓDULO 6A — Configurações com abas + Visualizações
+   ========================================================= */
+
+/* Abas das Configurações */
+.cfg-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.cfg-tab{
+  font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;
+  padding:10px 18px;border-radius:13px;border:1px solid var(--glass-border);
+  background:var(--glass);backdrop-filter:blur(12px);color:var(--text-soft);transition:.18s;
+}
+.cfg-tab:hover{background:rgba(255,255,255,.7);color:var(--text)}
+.cfg-tab.active{background:#fff;color:var(--blue);border-color:rgba(10,132,255,.25);
+  box-shadow:0 4px 14px -6px rgba(10,132,255,.35)}
+
+.cfg-tab-content{display:none}
+.cfg-tab-content.active{display:block;animation:rise .3s ease both}
+
+/* Método de Conexão */
+.conn-info{background:rgba(255,255,255,.45);border:1px solid var(--glass-border);
+  border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:13px}
+.conn-icon{font-size:22px;flex-shrink:0}
+.conn-text b{font-size:14px;font-weight:700;display:block}
+.conn-text span{font-size:12.5px;color:var(--text-soft)}
+.pass-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Preferências (rows de toggle/select) */
+.pref-row{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 0;border-bottom:1px solid rgba(60,60,67,.08)}
+.pref-row:last-child{border-bottom:none}
+.pref-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pref-label{font-size:14.5px;font-weight:600;color:var(--text)}
+.pref-desc{font-size:12px;color:var(--text-soft)}
+.pref-soon{font-size:11.5px;font-weight:600;background:rgba(10,132,255,.12);color:var(--blue);
+  padding:4px 10px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.pref-select{font-family:var(--font);font-size:13.5px;color:var(--text);background:var(--glass);
+  border:1px solid var(--glass-border);border-radius:11px;padding:8px 12px;cursor:pointer;
+  backdrop-filter:blur(8px);flex-shrink:0}
+.pref-select:focus{outline:none;border-color:var(--blue)}
+
+/* Toggle switch estilo iOS */
+.toggle{position:relative;display:inline-block;width:48px;height:28px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.tog-slider{position:absolute;inset:0;border-radius:28px;background:rgba(120,120,128,.3);
+  cursor:pointer;transition:.25s}
+.tog-slider::before{content:"";position:absolute;width:22px;height:22px;border-radius:50%;
+  background:#fff;left:3px;bottom:3px;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.toggle input:checked + .tog-slider{background:var(--success)}
+.toggle input:checked + .tog-slider::before{transform:translateX(20px)}
+
+/* edição inline de categoria */
+.cat-edit-form{background:rgba(255,255,255,.5);border:1px solid var(--glass-border);
+  border-radius:13px;padding:12px;margin-top:8px;display:flex;flex-direction:column;gap:9px}
+.cat-edit-row{display:flex;gap:9px;align-items:center}
+.cat-edit-row input[type=text]{flex:1;font-family:var(--font);font-size:14px;background:rgba(255,255,255,.7);
+  border:1px solid var(--glass-border);border-radius:10px;padding:9px 12px}
+.cat-edit-row input[type=text]:focus{outline:none;border-color:var(--blue)}
+.cat-edit-btns{display:flex;gap:8px}
+
+/* semana: esconder fins de semana */
+.cal-grid.hide-fds .cal-cell:nth-child(7n),
+.cal-grid.hide-fds .cal-cell:nth-child(7n-6),
+.cal-weekdays.hide-fds div:first-child,
+.cal-weekdays.hide-fds div:last-child{display:none}
+
+/* número de semana */
+.week-num{font-size:9px;font-weight:700;color:var(--text-soft);position:absolute;top:3px;right:5px}
+
+/* reduzir brilho de passados */
+.cal-cell.passado{opacity:.45}
+
+@media (max-width:560px){.cfg-tabs{gap:4px}.cfg-tab{font-size:13px;padding:9px 13px}}
