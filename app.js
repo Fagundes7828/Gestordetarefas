@@ -3,10 +3,11 @@
 // =========================================================
 
 import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged, signOut }
+import { onAuthStateChanged, signOut, updateProfile, updatePassword,
+  reauthenticateWithCredential, EmailAuthProvider }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
-  collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc,
+  collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc,
   query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -28,6 +29,8 @@ onAuthStateChanged(auth, (user) => {
   if (!user) { window.location.href = "index.html"; return; }
   usuario = user;
   document.getElementById("sideUser").textContent = user.displayName || user.email;
+  carregarPerfilUI();
+  escutarCategorias();
   escutarTarefas();
 });
 
@@ -460,3 +463,171 @@ function escapar(s) {
 document.getElementById("taskOverlay").addEventListener("click", e => { if (e.target.id==="taskOverlay") closeTaskModal(); });
 document.getElementById("dayOverlay").addEventListener("click", e => { if (e.target.id==="dayOverlay") closeDayModal(); });
 document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeTaskModal(); closeDayModal(); } });
+
+/* =========================================================
+   MÓDULO 4 — CONFIGURAÇÕES
+   ========================================================= */
+
+let avatarCor = "#0a84ff";
+let categorias = [];
+const CORES_CAT = ['#34c759','#0a84ff','#ff9500','#ff3b30','#bf5af2','#8e8e93','#5e5ce6','#ff2d55'];
+
+function iniciais(nome) {
+  if (!nome) return "MF";
+  return nome.trim().split(/\s+/).map(p => p[0]).slice(0,2).join("").toUpperCase();
+}
+
+function cfgAlert(msg, tipo) {
+  const a = document.getElementById("cfgAlert");
+  a.textContent = msg;
+  a.className = "cfg-alert show " + (tipo === "ok" ? "ok" : "error");
+  setTimeout(() => { a.className = "cfg-alert"; }, 4000);
+}
+
+/* ---------- Carrega o perfil na tela ---------- */
+function carregarPerfilUI() {
+  const nome = usuario.displayName || "";
+  document.getElementById("cfgName").value = nome;
+  document.getElementById("cfgEmail").value = usuario.email || "(conta sem e-mail)";
+
+  const ini = iniciais(nome || usuario.email);
+  document.getElementById("sideAvatar").textContent = ini;
+  document.getElementById("cfgAvatar").textContent = ini;
+
+  // Detecta se entrou com Google (some o bloco de senha)
+  const ehGoogle = usuario.providerData.some(p => p.providerId === "google.com");
+  const temSenha = usuario.providerData.some(p => p.providerId === "password");
+  document.getElementById("passBlock").style.display = temSenha && !ehGoogle ? "block" : (temSenha ? "block" : "none");
+
+  // Cor do avatar salva (no Firestore)
+  getDoc(doc(db, "usuarios", usuario.uid)).then(snap => {
+    const c = snap.exists() && snap.data().avatarCor;
+    if (c) {
+      avatarCor = c;
+      aplicarAvatarCor(c);
+      document.querySelectorAll(".ac").forEach(el => el.classList.toggle("sel", el.dataset.c === c));
+    }
+  }).catch(()=>{});
+}
+
+function aplicarAvatarCor(cor) {
+  const grad = `linear-gradient(145deg, ${cor}, ${escurece(cor)})`;
+  document.getElementById("sideAvatar").style.background = grad;
+  document.getElementById("cfgAvatar").style.background = grad;
+}
+function escurece(hex) {
+  // gera um tom um pouco mais escuro para o degradê
+  const m = { "#0a84ff":"#5e5ce6","#34c759":"#2f9e6f","#ff9500":"#ff5e3a","#ff3b30":"#c4291f","#bf5af2":"#8a3fb0" };
+  return m[hex] || hex;
+}
+
+window.pickAvatarColor = function (el) {
+  document.querySelectorAll(".ac").forEach(a => a.classList.remove("sel"));
+  el.classList.add("sel");
+  avatarCor = el.dataset.c;
+  aplicarAvatarCor(avatarCor);
+};
+
+/* ---------- Salvar nome + cor do avatar ---------- */
+window.salvarPerfil = async function () {
+  const nome = document.getElementById("cfgName").value.trim();
+  if (!nome) return cfgAlert("Digite um nome.", "error");
+
+  const btn = document.getElementById("btnSaveProfile");
+  btn.disabled = true; btn.textContent = "Salvando...";
+  try {
+    await updateProfile(usuario, { displayName: nome });
+    await setDoc(doc(db, "usuarios", usuario.uid), { nome, avatarCor }, { merge: true });
+    document.getElementById("sideUser").textContent = nome;
+    const ini = iniciais(nome);
+    document.getElementById("sideAvatar").textContent = ini;
+    document.getElementById("cfgAvatar").textContent = ini;
+    cfgAlert("Perfil salvo com sucesso!", "ok");
+  } catch (err) {
+    console.error(err);
+    cfgAlert("Não foi possível salvar o perfil.", "error");
+  } finally { btn.disabled = false; btn.textContent = "Salvar perfil"; }
+};
+
+/* ---------- Trocar senha ---------- */
+window.trocarSenha = async function () {
+  const atual = document.getElementById("cfgPass1").value;
+  const nova  = document.getElementById("cfgPass2").value;
+  if (!atual || !nova) return cfgAlert("Preencha a senha atual e a nova.", "error");
+  if (nova.length < 6) return cfgAlert("A nova senha precisa ter no mínimo 6 caracteres.", "error");
+
+  const btn = document.getElementById("btnSavePass");
+  btn.disabled = true; btn.textContent = "Atualizando...";
+  try {
+    // Reautentica (o Firebase exige login recente para trocar senha)
+    const cred = EmailAuthProvider.credential(usuario.email, atual);
+    await reauthenticateWithCredential(usuario, cred);
+    await updatePassword(usuario, nova);
+    document.getElementById("cfgPass1").value = "";
+    document.getElementById("cfgPass2").value = "";
+    cfgAlert("Senha atualizada com sucesso!", "ok");
+  } catch (err) {
+    console.error(err);
+    if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password")
+      cfgAlert("A senha atual está incorreta.", "error");
+    else if (err.code === "auth/too-many-requests")
+      cfgAlert("Muitas tentativas. Tente novamente mais tarde.", "error");
+    else cfgAlert("Não foi possível trocar a senha.", "error");
+  } finally { btn.disabled = false; btn.textContent = "Atualizar senha"; }
+};
+
+/* ---------- Categorias (Firestore, tempo real) ---------- */
+function escutarCategorias() {
+  const ref = doc(db, "usuarios", usuario.uid);
+  onSnapshot(ref, (snap) => {
+    categorias = (snap.exists() && snap.data().categorias) || [];
+    renderCategorias();
+    preencherDatalist();
+  }, (err) => console.error("Erro ao ler categorias:", err));
+}
+
+function renderCategorias() {
+  const box = document.getElementById("catsList");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!categorias.length) {
+    box.innerHTML = `<span class="cats-empty">Nenhuma categoria ainda. Adicione abaixo. 👇</span>`;
+    return;
+  }
+  categorias.forEach((c, i) => {
+    const cor = CORES_CAT[i % CORES_CAT.length];
+    const el = document.createElement("div");
+    el.className = "cat";
+    el.innerHTML = `<span class="dot" style="background:${cor}"></span><span></span><span class="x" title="Remover">✕</span>`;
+    el.querySelector("span:nth-child(2)").textContent = c;
+    el.querySelector(".x").onclick = () => removerCategoria(c);
+    box.appendChild(el);
+  });
+}
+
+function preencherDatalist() {
+  const dl = document.getElementById("catOptions");
+  if (!dl) return;
+  dl.innerHTML = categorias.map(c => `<option value="${escapar(c)}">`).join("");
+}
+
+window.addCategoria = async function () {
+  const i = document.getElementById("newCat");
+  const v = i.value.trim();
+  if (!v) return;
+  if (categorias.some(c => c.toLowerCase() === v.toLowerCase())) {
+    i.value = ""; return cfgAlert("Essa categoria já existe.", "error");
+  }
+  const novas = [...categorias, v];
+  try {
+    await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
+    i.value = "";
+  } catch (err) { console.error(err); cfgAlert("Não foi possível adicionar.", "error"); }
+};
+
+async function removerCategoria(nome) {
+  const novas = categorias.filter(c => c !== nome);
+  try {
+    await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
+  } catch (err) { console.error(err); cfgAlert("Não foi possível remover.", "error"); }
+}
