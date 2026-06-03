@@ -4,7 +4,7 @@
 
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut, updateProfile, updatePassword,
-  reauthenticateWithCredential, EmailAuthProvider }
+  reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
   collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc,
@@ -20,6 +20,17 @@ let usuario = null;
 let tarefas = [];
 let editandoId = null;                 // id da tarefa em edição (null = nova)
 let calRef = new Date();               // mês/ano em exibição no calendário
+let prefs = {                          // preferências do usuário (Visualizações)
+  paginaInicial: "inicio",
+  primeiroDia: 0,
+  mostrarFDS: true,
+  mostrarConcluidas: true,
+  mostrarAtraso: true,
+  categoriasColoridas: true,
+  calendarConcluidas: true,
+  reduzirPassados: false,
+  numeroDaSemana: false
+};
 
 /* ---------------------------------------------------------
    Proteção da página + carregamento
@@ -31,6 +42,7 @@ onAuthStateChanged(auth, (user) => {
   carregarPerfilUI();
   escutarCategorias();
   escutarTarefas();
+  carregarPrefs();
 });
 
 window.sair = async () => { await signOut(auth); window.location.href = "index.html"; };
@@ -307,21 +319,36 @@ window.renderCalendar = function () {
   document.getElementById("calTitle").textContent =
     MESES[m].charAt(0).toUpperCase()+MESES[m].slice(1) + " " + y;
 
-  const mapa = ocorrenciasPorDia(tarefasFiltradas());
+  // filtra concluídas do calendário se necessário
+  let base = tarefasFiltradas();
+  if (!prefs.calendarConcluidas) base = base.filter(t => t.status !== "concluida");
+
+  const mapa = ocorrenciasPorDia(base);
   const grid = document.getElementById("calGrid"); grid.innerHTML = "";
 
-  const firstDay = new Date(y, m, 1).getDay();
+  const inicioSemana = Number(prefs.primeiroDia ?? 0);  // 0=Dom, 1=Seg
+  let firstDay = new Date(y, m, 1).getDay() - inicioSemana;
+  if (firstDay < 0) firstDay += 7;
+
   const diasNoMes = new Date(y, m+1, 0).getDate();
   const diasMesAnt = new Date(y, m, 0).getDate();
   const hojeISO = dataHojeISO();
 
+  // atualiza cabeçalho da semana com o início correto
+  const wdCells = document.querySelectorAll(".cal-weekdays div");
+  const DIAS_CURTOS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  wdCells.forEach((el, i) => { el.textContent = DIAS_CURTOS[(i + inicioSemana) % 7]; });
+
   for (let i=firstDay-1; i>=0; i--) grid.appendChild(celulaMuda(diasMesAnt-i));
   for (let d=1; d<=diasNoMes; d++) {
     const iso = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    grid.appendChild(celula(d, iso, mapa[iso]||[], iso===hojeISO));
+    const isPast = iso < hojeISO;
+    grid.appendChild(celula(d, iso, mapa[iso]||[], iso===hojeISO, isPast));
   }
   const restantes = (7 - ((firstDay+diasNoMes)%7))%7;
   for (let d=1; d<=restantes; d++) grid.appendChild(celulaMuda(d));
+
+  aplicarPrefsCalendario();
 };
 
 function celulaMuda(num) {
@@ -331,9 +358,11 @@ function celulaMuda(num) {
   return c;
 }
 
-function celula(dia, iso, evs, hoje) {
+function celula(dia, iso, evs, hoje, isPast) {
   const c = document.createElement("div");
-  c.className = "cal-cell" + (hoje ? " today" : "");
+  let cls = "cal-cell" + (hoje ? " today" : "");
+  if (isPast && prefs.reduzirPassados) cls += " passado";
+  c.className = cls;
   c.innerHTML = `<div class="cal-num">${dia}</div>`;
 
   const box = document.createElement("div");
@@ -488,33 +517,7 @@ function cfgAlert(msg, tipo) {
 }
 
 /* ---------- Carrega o perfil na tela ---------- */
-function carregarPerfilUI() {
-  const nome = usuario.displayName || "";
-  document.getElementById("cfgName").value = nome;
-  document.getElementById("cfgEmail").value = usuario.email || "(conta sem e-mail)";
 
-  const ini = iniciais(nome || usuario.email);
-  document.getElementById("sideAvatar").textContent = ini;
-  document.getElementById("cfgAvatar").textContent = ini;
-
-  // Detecta se entrou com Google (some o bloco de senha)
-  const ehGoogle = usuario.providerData.some(p => p.providerId === "google.com");
-  const temSenha = usuario.providerData.some(p => p.providerId === "password");
-  document.getElementById("passBlock").style.display = temSenha && !ehGoogle ? "block" : (temSenha ? "block" : "none");
-
-  // Cor do avatar salva (no Firestore)
-  montarGridCores();
-  getDoc(doc(db, "usuarios", usuario.uid)).then(snap => {
-    const c = snap.exists() && snap.data().avatarCor;
-    if (c) {
-      avatarCor = c;
-      aplicarAvatarCor(c);   // ao carregar, aplica em menu + preview (é a cor já salva)
-      montarGridCores();
-    } else {
-      aplicarAvatarCor(avatarCor);
-    }
-  }).catch(()=>{});
-}
 
 function aplicarAvatarCor(cor) {
   // aplica em AMBOS (menu + preview) — usado só ao carregar e ao salvar
@@ -1002,3 +1005,122 @@ document.getElementById("detailOverlay").addEventListener("click", e => {
   if (e.target.id === "detailOverlay") closeTaskDetail();
 });
 // (o Esc já fecha todos via listener existente — extend ele)
+
+/* =========================================================
+   MÓDULO 6A — Configurações (abas + visualizações + recuperar senha)
+   ========================================================= */
+
+/* ---------- Navegação entre abas ---------- */
+window.switchCfgTab = function (tab) {
+  document.querySelectorAll(".cfg-tab").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".cfg-tab-content").forEach(c =>
+    c.classList.toggle("active", c.id === "cfgtab-" + tab));
+};
+
+/* ---------- Método de Conexão ---------- */
+function renderConnInfo() {
+  const box = document.getElementById("connInfo");
+  if (!box) return;
+  const ehGoogle = usuario.providerData.some(p => p.providerId === "google.com");
+  const temSenha = usuario.providerData.some(p => p.providerId === "password");
+  if (ehGoogle) {
+    box.innerHTML = `<div class="conn-icon">🔵</div><div class="conn-text"><b>Google</b><span>Conta vinculada: ${usuario.email}</span></div>`;
+    document.getElementById("passBlock").style.display = "none";
+  } else if (temSenha) {
+    box.innerHTML = `<div class="conn-icon">📧</div><div class="conn-text"><b>E-mail e Senha</b><span>${usuario.email}</span></div>`;
+    document.getElementById("passBlock").style.display = "block";
+  } else {
+    box.innerHTML = `<div class="conn-icon">🔑</div><div class="conn-text"><b>Outro método</b><span>${usuario.email || "—"}</span></div>`;
+  }
+}
+
+/* ---------- Recuperar senha ---------- */
+window.recuperarSenha = async function () {
+  if (!usuario.email) return cfgAlert("Nenhum e-mail associado.", "error");
+  try {
+    await sendPasswordResetEmail(auth, usuario.email);
+    cfgAlert("E-mail de recuperação enviado para " + usuario.email, "ok");
+  } catch (err) {
+    console.error(err); cfgAlert("Não foi possível enviar o e-mail.", "error");
+  }
+};
+
+/* ---------- Carregar perfil (atualizado com bio + conn) ---------- */
+function carregarPerfilUI() {
+  const nome = usuario.displayName || "";
+  document.getElementById("cfgName").value = nome;
+  document.getElementById("cfgEmail").value = usuario.email || "(conta sem e-mail)";
+  const ini = iniciais(nome || usuario.email);
+  document.getElementById("sideAvatar").textContent = ini;
+  document.getElementById("cfgAvatar").textContent = ini;
+  renderConnInfo();
+  montarGridCores();
+  getDoc(doc(db, "usuarios", usuario.uid)).then(snap => {
+    if (!snap.exists()) { aplicarAvatarCor(avatarCor); return; }
+    const d = snap.data();
+    if (d.avatarCor) { avatarCor = d.avatarCor; aplicarAvatarCor(d.avatarCor); montarGridCores(); }
+    if (d.bio) document.getElementById("cfgBio").value = d.bio;
+  }).catch(() => {});
+}
+
+/* ---------- Salvar perfil (bio incluída) ---------- */
+window.salvarPerfil = async function () {
+  const nome = document.getElementById("cfgName").value.trim();
+  const bio  = document.getElementById("cfgBio")?.value.trim() || "";
+  if (!nome) return cfgAlert("Digite um nome.", "error");
+  const btn = document.getElementById("btnSaveProfile");
+  btn.disabled = true; btn.textContent = "Salvando...";
+  try {
+    await updateProfile(usuario, { displayName: nome });
+    await setDoc(doc(db, "usuarios", usuario.uid), { nome, bio, avatarCor }, { merge: true });
+    document.getElementById("sideUser").textContent = nome;
+    const ini = iniciais(nome);
+    document.getElementById("sideAvatar").textContent = ini;
+    document.getElementById("cfgAvatar").textContent = ini;
+    aplicarAvatarCor(avatarCor);
+    cfgAlert("Perfil salvo com sucesso!", "ok");
+  } catch (err) {
+    console.error(err); cfgAlert("Não foi possível salvar o perfil.", "error");
+  } finally { btn.disabled = false; btn.textContent = "Salvar perfil"; }
+};
+
+/* ---------- Preferências (Visualizações) ---------- */
+async function carregarPrefs() {
+  try {
+    const snap = await getDoc(doc(db, "usuarios", usuario.uid));
+    if (snap.exists() && snap.data().prefs) {
+      prefs = { ...prefs, ...snap.data().prefs };
+    }
+  } catch (err) { console.error(err); }
+  aplicarPrefsUI();
+  aplicarPrefsCalendario();
+}
+
+function aplicarPrefsUI() {
+  const get = id => document.getElementById(id);
+  if (get("prefHome")) get("prefHome").value = prefs.paginaInicial || "inicio";
+  if (get("prefWeekStart")) get("prefWeekStart").value = String(prefs.primeiroDia ?? 0);
+  if (get("prefWeekends")) get("prefWeekends").checked = prefs.mostrarFDS !== false;
+  if (get("prefShowDone")) get("prefShowDone").checked = prefs.mostrarConcluidas !== false;
+  if (get("prefShowLate")) get("prefShowLate").checked = prefs.mostrarAtraso !== false;
+  if (get("prefColorCats")) get("prefColorCats").checked = prefs.categoriasColoridas !== false;
+  if (get("prefCalDone")) get("prefCalDone").checked = prefs.calendarConcluidas !== false;
+  if (get("prefDimPast")) get("prefDimPast").checked = prefs.reduzirPassados === true;
+  if (get("prefWeekNum")) get("prefWeekNum").checked = prefs.numeroDaSemana === true;
+}
+
+window.salvarPref = async function (chave, valor) {
+  prefs[chave] = typeof valor === "string" && !isNaN(valor) ? Number(valor) : valor;
+  aplicarPrefsCalendario();
+  try {
+    await setDoc(doc(db, "usuarios", usuario.uid), { prefs }, { merge: true });
+  } catch (err) { console.error(err); }
+};
+
+function aplicarPrefsCalendario() {
+  const grid = document.getElementById("calGrid");
+  const wdays = document.querySelector(".cal-weekdays");
+  if (grid) grid.classList.toggle("hide-fds", !prefs.mostrarFDS);
+  if (wdays) wdays.classList.toggle("hide-fds", !prefs.mostrarFDS);
+}
