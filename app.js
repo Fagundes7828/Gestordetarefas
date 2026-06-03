@@ -64,6 +64,7 @@ window.goPage = function (page) {
   document.querySelectorAll(".page").forEach(p =>
     p.classList.toggle("active", p.id === "page-" + page));
   if (page === "calendario") { calRef = brNow(); renderCalendar(); }
+  if (page === "tarefas") { accAberta = null; aplicarEstadoAcc(); }
 };
 
 /* ---------------------------------------------------------
@@ -225,8 +226,8 @@ function render() {
   renderCards("pendCards", pend, "Nenhuma tarefa pendente. Tudo em dia! 🎉");
   document.getElementById("pendCount").textContent = pend.length ? `${pend.length} item(ns)` : "";
 
-  renderCards("allCards", tarefas, "Você ainda não criou nenhuma tarefa.");
-  document.getElementById("allCount").textContent = total ? `${total} item(ns)` : "";
+  // Atualiza a tela de Tarefas (accordion + contadores)
+  renderTarefasAccordion();
 }
 function renderCards(containerId, lista, vazio) {
   const box = document.getElementById(containerId); box.innerHTML = "";
@@ -630,4 +631,126 @@ async function removerCategoria(nome) {
   try {
     await setDoc(doc(db, "usuarios", usuario.uid), { categorias: novas }, { merge: true });
   } catch (err) { console.error(err); cfgAlert("Não foi possível remover.", "error"); }
+}
+
+/* =========================================================
+   MÓDULO 5 — TELA DE TAREFAS (accordion + busca + cards clicáveis)
+   ========================================================= */
+
+// Qual categoria está aberta no accordion (null = todas recolhidas)
+let accAberta = null;
+
+/* ---------- Clique nos cards de estatística do Dashboard ---------- */
+window.irParaTarefas = function (categoria) {
+  goPage("tarefas");
+  // "todas" abre Todas; demais abrem a categoria correspondente
+  abrirAcc(categoria);
+};
+
+/* ---------- Abrir/fechar uma categoria ---------- */
+window.toggleAcc = function (cat) {
+  if (accAberta === cat) { accAberta = null; }   // clicou na já aberta → recolhe
+  else { accAberta = cat; }                       // abre essa e recolhe as outras
+  aplicarEstadoAcc();
+};
+function abrirAcc(cat) {
+  accAberta = cat;
+  aplicarEstadoAcc();
+  // rola suavemente até a categoria aberta
+  setTimeout(() => {
+    const g = document.querySelector(`.acc-group[data-cat="${cat}"]`);
+    if (g) g.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
+}
+function aplicarEstadoAcc() {
+  document.querySelectorAll(".acc-group").forEach(g =>
+    g.classList.toggle("open", g.dataset.cat === accAberta));
+}
+
+/* ---------- Busca ---------- */
+window.limparBusca = function () {
+  document.getElementById("taskSearch").value = "";
+  renderTarefasAccordion();
+};
+
+function filtrarBusca(lista) {
+  const termo = document.getElementById("taskSearch")?.value.trim().toLowerCase() || "";
+  document.getElementById("searchClear").style.display = termo ? "block" : "none";
+  if (!termo) return lista;
+  return lista.filter(t =>
+    (t.titulo||"").toLowerCase().includes(termo) ||
+    (t.categoria||"").toLowerCase().includes(termo) ||
+    (t.projeto||"").toLowerCase().includes(termo) ||
+    (t.descricao||"").toLowerCase().includes(termo)
+  );
+}
+
+/* ---------- Render do accordion + contadores ---------- */
+window.renderTarefasAccordion = function () {
+  const base = filtrarBusca(tarefas);
+
+  const grupos = {
+    todas:     base,
+    pendente:  base.filter(t => t.status === "pendente" || t.status === "andamento"),
+    concluida: base.filter(t => t.status === "concluida"),
+    atrasada:  base.filter(t => t.status !== "concluida" && diasDeAtraso(t.conclusao) > 0)
+  };
+
+  // contadores em tempo real
+  document.getElementById("cntTodas").textContent = grupos.todas.length;
+  document.getElementById("cntPendente").textContent = grupos.pendente.length;
+  document.getElementById("cntConcluida").textContent = grupos.concluida.length;
+  document.getElementById("cntAtrasada").textContent = grupos.atrasada.length;
+
+  // cards de cada grupo
+  preencheGrupo("cardsTodas", grupos.todas, "Nenhuma tarefa cadastrada.");
+  preencheGrupo("cardsPendente", grupos.pendente, "Nenhuma tarefa pendente.");
+  preencheGrupo("cardsConcluida", grupos.concluida, "Nenhuma tarefa concluída ainda.");
+  preencheGrupo("cardsAtrasada", grupos.atrasada, "Nenhuma tarefa atrasada. 🎉");
+};
+
+function preencheGrupo(containerId, lista, vazio) {
+  const box = document.getElementById(containerId);
+  if (!box) return;
+  box.innerHTML = "";
+  if (!lista.length) { box.innerHTML = `<div class="acc-empty">${vazio}</div>`; return; }
+  lista.forEach(t => box.appendChild(cardTarefa(t)));
+}
+
+/* ---------- Card da tarefa (com ações) ---------- */
+function cardTarefa(t) {
+  const lv = nivel(t);
+  const d = diasDeAtraso(t.conclusao);
+  const statusCls = { pendente:"st-pendente", andamento:"st-andamento", concluida:"st-concluida" }[t.status] || "st-pendente";
+  const criado = t.criadoEm?.toDate ? t.criadoEm.toDate().toLocaleDateString("pt-BR") : "—";
+  const limite = t.conclusao ? new Date(t.conclusao).toLocaleDateString("pt-BR",{timeZone:"UTC"}) : "sem prazo";
+
+  const el = document.createElement("div");
+  el.className = "task-card lv-" + lv;
+  el.style.borderLeftColor = t.cor || "var(--blue)";
+  el.innerHTML = `
+    <div class="tc-head"><div class="tc-title"></div><span class="tc-cat"></span></div>
+    <div class="tc-badges">
+      <span class="dt-badge">${PRIOR[t.prioridade]||t.prioridade}</span>
+      ${t.projeto ? `<span class="dt-badge">📁 ${escapar(t.projeto)}</span>` : ""}
+    </div>
+    <div class="tc-due">📅 Limite: ${limite}${t.hora ? " · "+t.hora : ""}</div>
+    <div class="tc-info">Criada em ${criado}</div>
+    <div class="tc-foot">
+      <span class="tc-status ${statusCls}">${STATUS[t.status]||t.status}</span>
+      <span class="tc-late ${lv}">${t.status==="concluida" ? "✓ concluída" : textoAtraso(d)}</span>
+    </div>
+    <div class="dt-actions">
+      <button class="dt-btn dt-edit">✎ Editar</button>
+      ${t.status!=="concluida" ? `<button class="dt-btn dt-done">✓ Concluir</button>` : ""}
+      <button class="dt-btn dt-dup">⧉ Duplicar</button>
+      <button class="dt-btn dt-del">🗑 Excluir</button>
+    </div>`;
+  el.querySelector(".tc-title").textContent = t.titulo;
+  el.querySelector(".tc-cat").textContent = t.categoria || "Geral";
+  el.querySelector(".dt-edit").onclick = () => openTaskModal(t);
+  if (t.status!=="concluida") el.querySelector(".dt-done").onclick = () => concluir(t.id);
+  el.querySelector(".dt-dup").onclick = () => duplicar(t.id);
+  el.querySelector(".dt-del").onclick = () => excluir(t.id);
+  return el;
 }
