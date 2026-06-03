@@ -546,3 +546,69 @@ body.app{
 #page-config .section-head{margin-bottom:14px}
 #page-config .section-head h2{font-size:24px;font-weight:700;letter-spacing:-.01em}
 .cfg-card h3{display:flex;align-items:center;gap:9px}
+
+/* =========================================================
+   MÓDULO 5 — TELA DE TAREFAS (accordion + busca)
+   ========================================================= */
+
+/* cards de estatística clicáveis */
+.stat.clickable{cursor:pointer}
+.stat.clickable:hover{transform:translateY(-4px);box-shadow:0 18px 40px -14px rgba(40,30,90,.4)}
+.stat.clickable:active{transform:translateY(-1px)}
+
+/* barra de pesquisa */
+.task-search{display:flex;align-items:center;gap:10px;margin-bottom:18px;
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:16px;padding:12px 16px;
+  box-shadow:0 10px 28px -16px rgba(40,30,90,.25);max-width:720px}
+.task-search svg{width:19px;height:19px;color:var(--text-soft);flex-shrink:0;stroke-width:2}
+.task-search input{flex:1;border:none;background:none;font-family:var(--font);font-size:15px;color:var(--text)}
+.task-search input:focus{outline:none}
+.task-search input::placeholder{color:rgba(60,60,67,.45)}
+.search-clear{border:none;background:rgba(60,60,67,.12);color:var(--text-soft);cursor:pointer;
+  width:24px;height:24px;border-radius:50%;font-size:12px;flex-shrink:0;transition:.15s}
+.search-clear:hover{background:rgba(255,59,48,.18);color:var(--danger)}
+
+/* accordion */
+.accordion{display:flex;flex-direction:column;gap:12px;max-width:none}
+.acc-group{background:var(--glass);backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:18px;overflow:hidden;
+  box-shadow:0 12px 32px -18px rgba(40,30,90,.28);transition:.2s;
+  border-left:5px solid var(--cat-color, var(--blue))}
+.acc-group[data-cat="todas"]{--cat-color:#0a84ff}
+.acc-group[data-cat="pendente"]{--cat-color:#ff9500}
+.acc-group[data-cat="concluida"]{--cat-color:#34c759}
+.acc-group[data-cat="atrasada"]{--cat-color:#ff3b30}
+
+.acc-head{width:100%;display:flex;align-items:center;justify-content:space-between;
+  background:none;border:none;cursor:pointer;font-family:var(--font);padding:16px 20px;transition:.16s}
+.acc-head:hover{background:rgba(255,255,255,.4)}
+.acc-left{display:flex;align-items:center;gap:12px}
+.acc-ind{width:0;height:18px;border-radius:3px;background:var(--cat-color);transition:width .22s}
+.acc-name{font-size:16px;font-weight:700;color:var(--text)}
+.acc-right{display:flex;align-items:center;gap:12px}
+.acc-count{font-size:13px;font-weight:700;color:#fff;background:var(--cat-color);
+  min-width:26px;height:24px;padding:0 9px;border-radius:8px;display:grid;place-items:center}
+.acc-chevron{font-size:18px;color:var(--text-soft);transition:transform .25s;line-height:1}
+
+/* estado aberto */
+.acc-group.open{box-shadow:0 18px 44px -16px rgba(40,30,90,.4);filter:brightness(1.02)}
+.acc-group.open .acc-ind{width:5px}
+.acc-group.open .acc-chevron{transform:rotate(180deg)}
+.acc-group.open .acc-head{background:rgba(255,255,255,.5)}
+
+/* corpo retrátil (animação de altura) */
+.acc-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.acc-group.open .acc-body{max-height:4000px}
+.acc-body .cards{padding:16px 18px 18px}
+
+.acc-empty{grid-column:1/-1;text-align:center;padding:24px;color:var(--text-soft);font-size:14px}
+
+@media (max-width:560px){
+  .acc-name{font-size:15px}
+}
+
+/* complementos do card de tarefa na aba Tarefas */
+.tc-badges{display:flex;flex-wrap:wrap;gap:6px}
+.tc-info{font-size:11.5px;color:var(--text-soft)}
+.task-card .dt-actions{margin-top:6px;padding-top:10px;border-top:1px solid rgba(60,60,67,.1)}
