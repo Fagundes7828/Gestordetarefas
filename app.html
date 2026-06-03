@@ -377,6 +377,55 @@
     </div>
   </div>
 
+  <!-- ================= TASK DETAIL VIEW (#01) ================= -->
+  <div class="overlay" id="detailOverlay" style="position:fixed;inset:0;background:rgba(34,28,40,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:56">
+    <div class="card detail-card">
+
+      <!-- Cabeçalho -->
+      <div class="detail-head" id="detailHead">
+        <div class="detail-head-left">
+          <div class="detail-color-bar" id="detailColorBar"></div>
+          <div>
+            <div class="detail-title" id="detailTitle">—</div>
+            <div class="detail-cat-row">
+              <span class="detail-cat-badge" id="detailCatBadge"></span>
+              <span class="detail-status-badge" id="detailStatusBadge"></span>
+              <span class="detail-pri-badge" id="detailPriBadge"></span>
+            </div>
+          </div>
+        </div>
+        <button class="detail-close" onclick="closeTaskDetail()" title="Fechar">✕</button>
+      </div>
+
+      <!-- Corpo com scroll -->
+      <div class="detail-body" id="detailBody">
+        <!-- Descrição completa -->
+        <div class="detail-block">
+          <div class="detail-block-label">Descrição</div>
+          <div class="detail-desc" id="detailDesc"></div>
+        </div>
+
+        <!-- Informações em grade -->
+        <div class="detail-grid">
+          <div class="detail-info-item"><span class="di-label">Projeto</span><span class="di-val" id="detailProject">—</span></div>
+          <div class="detail-info-item"><span class="di-label">Início</span><span class="di-val" id="detailStart">—</span></div>
+          <div class="detail-info-item"><span class="di-label">Conclusão prevista</span><span class="di-val" id="detailDue">—</span></div>
+          <div class="detail-info-item"><span class="di-label">Horário</span><span class="di-val" id="detailTime">—</span></div>
+          <div class="detail-info-item"><span class="di-label">Criada em</span><span class="di-val" id="detailCreated">—</span></div>
+          <div class="detail-info-item"><span class="di-label">Atraso</span><span class="di-val" id="detailLate">—</span></div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="detail-foot">
+        <button class="dt-btn dt-edit" id="detailBtnEdit">✎ Editar</button>
+        <button class="dt-btn dt-done" id="detailBtnDone">✓ Concluir</button>
+        <button class="dt-btn dt-dup" id="detailBtnDup">⧉ Duplicar</button>
+        <button class="dt-btn dt-del" id="detailBtnDel">🗑 Excluir</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
