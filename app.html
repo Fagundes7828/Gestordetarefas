@@ -220,13 +220,17 @@
             <div class="avatar-big" id="cfgAvatar">MF</div>
             <div>
               <div class="cfg-label-sm">Cor do avatar</div>
-              <div class="avatar-colors" id="avatarColors">
-                <div class="ac sel" data-c="#0a84ff" style="background:linear-gradient(145deg,#0a84ff,#5e5ce6)" onclick="pickAvatarColor(this)"></div>
-                <div class="ac" data-c="#34c759" style="background:linear-gradient(145deg,#34c759,#2f9e6f)" onclick="pickAvatarColor(this)"></div>
-                <div class="ac" data-c="#ff9500" style="background:linear-gradient(145deg,#ff9500,#ff5e3a)" onclick="pickAvatarColor(this)"></div>
-                <div class="ac" data-c="#ff3b30" style="background:linear-gradient(145deg,#ff3b30,#c4291f)" onclick="pickAvatarColor(this)"></div>
-                <div class="ac" data-c="#bf5af2" style="background:linear-gradient(145deg,#bf5af2,#8a3fb0)" onclick="pickAvatarColor(this)"></div>
+              <div class="color-picker">
+                <button type="button" class="color-trigger" id="colorTrigger" onclick="toggleColorPopup(event)">
+                  <span class="color-dot" id="colorTriggerDot"></span>
+                  <span class="color-trigger-label">Escolher cor</span>
+                  <span class="color-trigger-chevron">⌄</span>
+                </button>
+                <div class="color-popup" id="colorPopup">
+                  <div class="color-grid" id="colorGrid"></div>
+                </div>
               </div>
+              <div class="cfg-preview-note">Pré-visualização. A cor só é aplicada ao salvar.</div>
             </div>
           </div>
 
