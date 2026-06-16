@@ -222,7 +222,10 @@ function nivel(t) {
    RENDER DO DASHBOARD (resumo + cards)
 --------------------------------------------------------- */
 function render() {
-  const total = tarefas.length;
+  // aplica preferência mostrarConcluidas
+  const base = prefs.mostrarConcluidas !== false ? tarefas : tarefas.filter(t => t.status !== "concluida");
+
+  const total      = tarefas.length; // total sempre conta todas
   const concluidas = tarefas.filter(t => t.status === "concluida").length;
   const pendentes  = tarefas.filter(t => t.status !== "concluida").length;
   const atrasadas  = tarefas.filter(t => t.status !== "concluida" && diasDeAtraso(t.conclusao) > 0).length;
@@ -235,12 +238,11 @@ function render() {
   document.getElementById("stRate").textContent = taxa.toFixed(2).replace('.', ',') + "%";
   document.getElementById("stBar").style.width = taxa + "%";
 
-  const pend = tarefas.filter(t => t.status !== "concluida")
+  const pend = base.filter(t => t.status !== "concluida")
     .sort((a,b) => (diasDeAtraso(b.conclusao)||-9999) - (diasDeAtraso(a.conclusao)||-9999));
   renderCards("pendCards", pend, "Nenhuma tarefa pendente. Tudo em dia! 🎉");
   document.getElementById("pendCount").textContent = pend.length ? `${pend.length} item(ns)` : "";
 
-  // Atualiza a tela de Tarefas (accordion + contadores)
   renderTarefasAccordion();
 }
 function renderCards(containerId, lista, vazio) {
@@ -686,11 +688,13 @@ function renderCategorias() {
         <div class="ci-nome"></div>
         ${c.descricao ? `<div class="ci-desc"></div>` : ""}
       </div>
+      <button class="ci-edit" title="Editar">✎</button>
       <button class="ci-toggle ${c.ativa ? "on" : "off"}">${c.ativa ? "Ativa" : "Inativa"}</button>
       <button class="ci-del" title="Remover">✕</button>`;
     el.querySelector(".ci-nome").textContent = c.nome;
     if (c.descricao) el.querySelector(".ci-desc").textContent = c.descricao;
     el.querySelector(".ci-toggle").onclick = () => toggleCategoriaAtiva(idx);
+    el.querySelector(".ci-edit").onclick = () => editarCategoria(idx, el, c);
     el.querySelector(".ci-del").onclick = () => removerCategoria(idx);
     box.appendChild(el);
   });
@@ -725,6 +729,39 @@ function removerCategoria(idx) {
   const c = categorias[idx];
   if (!confirm(`Remover a categoria "${c.nome}"? As tarefas que a usam continuarão existindo.`)) return;
   salvarCategorias(categorias.filter((_, i) => i !== idx));
+}
+
+function editarCategoria(idx, elCard, c) {
+  // remove formulário se já aberto neste card
+  const existing = elCard.querySelector(".cat-edit-form");
+  if (existing) { existing.remove(); return; }
+  // fecha formulários abertos em outros cards
+  document.querySelectorAll(".cat-edit-form").forEach(f => f.remove());
+
+  const form = document.createElement("div");
+  form.className = "cat-edit-form";
+  form.innerHTML = `
+    <div class="cat-edit-row">
+      <input type="color" class="ec-cor" value="${c.cor||'#0a84ff'}">
+      <input type="text" class="ec-nome" value="${escapar(c.nome)}" placeholder="Nome">
+    </div>
+    <input type="text" class="ec-desc" value="${escapar(c.descricao||'')}" placeholder="Descrição (opcional)">
+    <div class="cat-edit-btns">
+      <button class="btn btn-primary" style="font-size:13px;padding:8px 16px">Salvar</button>
+      <button class="btn btn-soft" style="font-size:13px;padding:8px 16px">Cancelar</button>
+    </div>`;
+  form.querySelector(".cat-edit-btns button:last-child").onclick = () => form.remove();
+  form.querySelector(".cat-edit-btns button:first-child").onclick = async () => {
+    const novoNome = form.querySelector(".ec-nome").value.trim();
+    const novaCor  = form.querySelector(".ec-cor").value;
+    const novaDesc = form.querySelector(".ec-desc").value.trim();
+    if (!novoNome) return cfgAlert("O nome não pode ficar vazio.", "error");
+    const novas = categorias.map((cat, i) => i === idx ? { ...cat, nome: novoNome, cor: novaCor, descricao: novaDesc } : cat);
+    await salvarCategorias(novas);
+    cfgAlert("Categoria atualizada!", "ok");
+    form.remove();
+  };
+  elCard.appendChild(form);
 }
 
 /* ---------- Dropdown de categoria no modal de tarefa ---------- */
@@ -1316,3 +1353,90 @@ window.fmt = function (cmd) {
 /* ---------- Fechar com Esc e clique fora ---------- */
 document.getElementById("roteiroOverlay").addEventListener("click", e => { if (e.target.id==="roteiroOverlay") closeRoteiroModal(); });
 document.getElementById("roteiroDetailOverlay").addEventListener("click", e => { if (e.target.id==="roteiroDetailOverlay") closeRoteiroDetail(); });
+
+/* =========================================================
+   CORREÇÕES DE PREFERÊNCIAS + LUCIDE INIT
+   ========================================================= */
+
+// Bug 3: mostrarAtraso — oculta o indicador de atraso nos cards quando desativado
+// Fazemos isso via CSS dinâmico (mais eficiente que rerender)
+function aplicarPrefAtraso() {
+  let style = document.getElementById("prefAtrasoStyle");
+  if (!style) { style = document.createElement("style"); style.id = "prefAtrasoStyle"; document.head.appendChild(style); }
+  style.textContent = prefs.mostrarAtraso !== false ? "" : ".tc-late,.detail-info-item:last-child{display:none}";
+}
+
+// Bug 4: categoriasColoridas — oculta bordas coloridas quando desativado
+function aplicarPrefCores() {
+  let style = document.getElementById("prefCoresStyle");
+  if (!style) { style = document.createElement("style"); style.id = "prefCoresStyle"; document.head.appendChild(style); }
+  style.textContent = prefs.categoriasColoridas !== false ? "" :
+    ".task-card{border-left-color:rgba(60,60,67,.15)!important}.cal-ev{background:#8e8e93!important}.detail-color-bar{background:#8e8e93!important}.detail-cat-badge{background:#8e8e93!important}";
+}
+
+// Bug 5: numeroDaSemana — desenha o número da semana ISO em cada linha do calendário
+function aplicarNumeroDaSemana() {
+  document.querySelectorAll(".week-num").forEach(el => el.remove());
+  if (!prefs.numeroDaSemana) return;
+  const cells = document.querySelectorAll(".cal-cell:not(.muted)");
+  cells.forEach(cell => {
+    const num = cell.querySelector(".cal-num");
+    if (!num) return;
+    const dia = parseInt(num.textContent);
+    const calTitle = document.getElementById("calTitle")?.textContent || "";
+    const match = calTitle.match(/(\w+)\s+(\d{4})/);
+    if (!match) return;
+    const mes = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"].indexOf(match[1].toLowerCase());
+    const ano = parseInt(match[2]);
+    if (mes < 0) return;
+    const d = new Date(ano, mes, dia);
+    if (d.getDay() === (prefs.primeiroDia ?? 0)) {
+      const semNum = getWeekNumber(d);
+      const badge = document.createElement("span");
+      badge.className = "week-num";
+      badge.textContent = "S" + semNum;
+      cell.style.position = "relative";
+      cell.appendChild(badge);
+    }
+  });
+}
+
+function getWeekNumber(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+// Bug 2 (página inicial): aplica após carregar as prefs
+const _carregarPrefsOrig = carregarPrefs;
+async function carregarPrefs() {
+  await _carregarPrefsOrig();
+  aplicarPrefAtraso();
+  aplicarPrefCores();
+  // redireciona para a página inicial configurada
+  const paginaInicial = prefs.paginaInicial || "inicio";
+  if (paginaInicial !== "inicio") goPage(paginaInicial);
+}
+
+// Re-exporta como window para que o salvarPref chame as funções corretas
+const _salvarPrefOrig = window.salvarPref;
+window.salvarPref = async function(chave, valor) {
+  await _salvarPrefOrig(chave, valor);
+  aplicarPrefAtraso();
+  aplicarPrefCores();
+  if (chave === "numeroDaSemana") aplicarNumeroDaSemana();
+};
+
+// Inicializa Lucide Icons depois do DOM
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.lucide) lucide.createIcons();
+});
+// Também re-renderiza ícones Lucide ao trocar de página (menus dinâmicos)
+const _goPageBase = window.goPage;
+window.goPage = function(page) {
+  _goPageBase(page);
+  if (window.lucide) lucide.createIcons();
+  if (page === "calendario") aplicarNumeroDaSemana();
+};
