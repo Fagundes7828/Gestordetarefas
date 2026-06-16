@@ -1355,7 +1355,6 @@ document.getElementById("roteiroOverlay").addEventListener("click", e => { if (e
 document.getElementById("roteiroDetailOverlay").addEventListener("click", e => { if (e.target.id==="roteiroDetailOverlay") closeRoteiroDetail(); });
 
 /* =========================================================
-   CORREÇÕES DE PREFERÊNCIAS + LUCIDE INIT
    ========================================================= */
 
 // Bug 3: mostrarAtraso — oculta o indicador de atraso nos cards quando desativado
@@ -1429,14 +1428,10 @@ window.salvarPref = async function(chave, valor) {
   if (chave === "numeroDaSemana") aplicarNumeroDaSemana();
 };
 
-// Inicializa Lucide Icons depois do DOM
 document.addEventListener("DOMContentLoaded", () => {
-  if (window.lucide) lucide.createIcons();
 });
-// Também re-renderiza ícones Lucide ao trocar de página (menus dinâmicos)
 const _goPageBase = window.goPage;
 window.goPage = function(page) {
   _goPageBase(page);
-  if (window.lucide) lucide.createIcons();
   if (page === "calendario") aplicarNumeroDaSemana();
 };
