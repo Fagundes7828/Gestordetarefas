@@ -1133,6 +1133,11 @@ async function carregarPrefs() {
   } catch (err) { console.error(err); }
   aplicarPrefsUI();
   aplicarPrefsCalendario();
+  aplicarPrefAtraso();
+  aplicarPrefCores();
+  // redireciona para a página inicial configurada após o login
+  const paginaInicial = prefs.paginaInicial || "inicio";
+  if (paginaInicial !== "inicio") goPage(paginaInicial);
 }
 
 function aplicarPrefsUI() {
@@ -1151,6 +1156,9 @@ function aplicarPrefsUI() {
 window.salvarPref = async function (chave, valor) {
   prefs[chave] = typeof valor === "string" && !isNaN(valor) ? Number(valor) : valor;
   aplicarPrefsCalendario();
+  aplicarPrefAtraso();
+  aplicarPrefCores();
+  if (chave === "numeroDaSemana") setTimeout(aplicarNumeroDaSemana, 100);
   try {
     await setDoc(doc(db, "usuarios", usuario.uid), { prefs }, { merge: true });
   } catch (err) { console.error(err); }
@@ -1187,15 +1195,19 @@ const RT_COR = {
 const _goPageOrig = window.goPage;
 window.goPage = function (page) {
   _goPageOrig(page);
+  // atualiza botão do topbar
   const btn = document.getElementById("btnTopbar");
-  if (!btn) return;
-  if (page === "roteiros") {
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Roteiro`;
-    btn.onclick = () => openRoteiroModal();
-  } else {
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Tarefa`;
-    btn.onclick = () => openTaskModal();
+  if (btn) {
+    if (page === "roteiros") {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Roteiro`;
+      btn.onclick = () => openRoteiroModal();
+    } else {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg> Criar Tarefa`;
+      btn.onclick = () => openTaskModal();
+    }
   }
+  // aplica número de semana ao abrir calendário
+  if (page === "calendario") setTimeout(aplicarNumeroDaSemana, 100);
 };
 
 /* ---------- Firestore: escutar roteiros ---------- */
@@ -1408,30 +1420,9 @@ function getWeekNumber(d) {
   return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
 }
 
-// Bug 2 (página inicial): aplica após carregar as prefs
-const _carregarPrefsOrig = carregarPrefs;
-async function carregarPrefs() {
-  await _carregarPrefsOrig();
-  aplicarPrefAtraso();
-  aplicarPrefCores();
-  // redireciona para a página inicial configurada
-  const paginaInicial = prefs.paginaInicial || "inicio";
-  if (paginaInicial !== "inicio") goPage(paginaInicial);
-}
+// carregarPrefs consolidada acima
 
-// Re-exporta como window para que o salvarPref chame as funções corretas
-const _salvarPrefOrig = window.salvarPref;
-window.salvarPref = async function(chave, valor) {
-  await _salvarPrefOrig(chave, valor);
-  aplicarPrefAtraso();
-  aplicarPrefCores();
-  if (chave === "numeroDaSemana") aplicarNumeroDaSemana();
-};
 
-document.addEventListener("DOMContentLoaded", () => {
-});
-const _goPageBase = window.goPage;
-window.goPage = function(page) {
-  _goPageBase(page);
-  if (page === "calendario") aplicarNumeroDaSemana();
-};
+
+
+// goPage consolidado no wrapper de roteiros abaixo
