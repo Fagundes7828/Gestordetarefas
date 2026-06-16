@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Início · MF Agenda</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
 </head>
 <body class="app">
 
@@ -28,27 +29,27 @@
 
       <nav class="menu">
         <button class="menu-item active" data-page="inicio" onclick="goPage('inicio')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z" stroke-linejoin="round"/></svg>
+          <i data-lucide="house"></i>
           <span>Início</span>
         </button>
         <button class="menu-item" data-page="calendario" onclick="goPage('calendario')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 3v3M16 3v3" stroke-linecap="round"/></svg>
+          <i data-lucide="calendar-days"></i>
           <span>Calendário</span>
         </button>
         <button class="menu-item" data-page="tarefas" onclick="goPage('tarefas')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6h11M9 12h11M9 18h11" stroke-linecap="round"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <i data-lucide="check-square"></i>
           <span>Tarefas</span>
         </button>
         <button class="menu-item" data-page="roteiros" onclick="goPage('roteiros')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke-linecap="round"/></svg>
+          <i data-lucide="file-text"></i>
           <span>Roteiros</span>
         </button>
         <button class="menu-item" data-page="config" onclick="goPage('config')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7.6 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.3-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" stroke-linejoin="round"/></svg>
+          <i data-lucide="settings"></i>
           <span>Configurações</span>
         </button>
         <button class="menu-item danger" onclick="sair()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17l5-5-5-5M20 12H9M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <i data-lucide="log-out"></i>
           <span>Sair</span>
         </button>
       </nav>
@@ -66,12 +67,12 @@
             <div class="time" id="ckTime">—</div>
           </div>
           <button class="go-cal" title="Abrir calendário na data de hoje" onclick="goPage('calendario')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <i data-lucide="arrow-right"></i>
           </button>
         </div>
 
         <button class="btn-create" id="btnTopbar" onclick="openTaskModal()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+          <i data-lucide="plus"></i>
           Criar Tarefa
         </button>
       </div>
