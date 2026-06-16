@@ -955,3 +955,9 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
   position:absolute;top:4px;right:6px;font-size:9px;font-weight:700;
   color:var(--text-soft);opacity:.7;
 }
+
+/* Ícones SVG inline (estilo Lucide) nos botões do menu e cabeçalho */
+.menu-item svg{width:20px;height:20px;flex-shrink:0;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;fill:none}
+.go-cal svg{width:20px;height:20px}
+.btn-create svg{width:17px;height:17px}
