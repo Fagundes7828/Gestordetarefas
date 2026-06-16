@@ -930,3 +930,28 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
   .roteiros-grid{grid-template-columns:1fr}
   .roteiro-modal,.roteiro-detail-card{max-height:95vh}
 }
+
+/* =========================================================
+   LUCIDE ICONS + AJUSTES FINAIS
+   ========================================================= */
+
+/* ícones Lucide nos menus e botões */
+.menu-item i,.go-cal i,.btn-create i{
+  width:20px;height:20px;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;fill:none;flex-shrink:0;
+}
+.go-cal i{width:22px;height:22px}
+.btn-create i{width:18px;height:18px}
+
+/* botão editar categoria */
+.ci-edit{
+  border:none;background:rgba(10,132,255,.1);color:var(--blue);cursor:pointer;
+  font-size:14px;padding:4px 9px;border-radius:8px;transition:.15s;
+}
+.ci-edit:hover{background:rgba(10,132,255,.22)}
+
+/* número da semana no calendário */
+.week-num{
+  position:absolute;top:4px;right:6px;font-size:9px;font-weight:700;
+  color:var(--text-soft);opacity:.7;
+}
