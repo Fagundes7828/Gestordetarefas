@@ -194,13 +194,13 @@ body.app{
 .main{flex:1;min-width:0;padding:6px 8px 40px}
 
 /* ---------- Cabeçalho ---------- */
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap;
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px;flex-wrap:wrap;
   position:sticky;top:18px;z-index:40;
   background:var(--glass);backdrop-filter:blur(28px) saturate(180%);
   -webkit-backdrop-filter:blur(28px) saturate(180%);
   border:1px solid var(--glass-border);border-radius:20px;padding:16px 22px;
   box-shadow:0 12px 30px -14px rgba(40,30,90,.3);}
-.clock-box{display:flex;align-items:center;gap:14px}
+.clock-box{display:flex;align-items:flex-start;gap:14px}
 .clock-info .weekday{font-size:22px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize}
 .clock-info .fulldate{font-size:14px;color:var(--text-soft);margin-top:1px}
 .clock-info .time{font-size:15px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;margin-top:3px}
@@ -227,7 +227,7 @@ body.app{
 }
 
 /* ---------- Cartões de resumo ---------- */
-.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+.summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;margin-bottom:26px}
 .stat{
   background:var(--glass);backdrop-filter:blur(20px) saturate(180%);
   border:1px solid var(--glass-border);border-radius:20px;padding:18px 16px;
@@ -241,15 +241,16 @@ body.app{
 .stat.s-pend .value{color:#ff9500}
 .stat.s-late .value{color:var(--danger)}
 .stat.s-rate .value{color:var(--blue)}
+.stat.s-rate{cursor:default}
 .stat .bar{height:6px;border-radius:4px;background:rgba(60,60,67,.14);margin-top:10px;overflow:hidden}
 .stat .bar i{display:block;height:100%;background:var(--blue);border-radius:4px;transition:width .5s}
 
 /* ---------- Seção de tarefas pendentes ---------- */
-.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .section-head h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
 .section-head .count{font-size:13px;color:var(--text-soft);font-weight:600}
 
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 
 .task-card{
   background:var(--glass);backdrop-filter:blur(20px) saturate(180%);
@@ -267,7 +268,7 @@ body.app{
 .tc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .tc-title{font-size:16px;font-weight:700;line-height:1.25}
 .tc-cat{font-size:11px;font-weight:600;color:var(--text-soft);background:rgba(60,60,67,.1);padding:3px 9px;border-radius:8px;white-space:nowrap}
-.tc-body{font-size:13.5px;color:var(--text-soft);line-height:1.4}
+.tc-body{font-size:13.5px;color:var(--text-soft);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .tc-due{font-size:12.5px;font-weight:600;color:var(--text)}
 .tc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid rgba(60,60,67,.1)}
 .tc-status{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:8px}
@@ -323,7 +324,6 @@ body.app{
 
 /* ---------- Responsivo do dashboard ---------- */
 @media (max-width:920px){
-  .summary{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:760px){
   .shell{flex-direction:column;padding:12px;gap:12px}
@@ -336,7 +336,6 @@ body.app{
   .row2{grid-template-columns:1fr}
 }
 @media (max-width:460px){
-  .summary{grid-template-columns:1fr 1fr}
   .stat .value{font-size:24px}
 }
 
@@ -961,3 +960,53 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
   stroke-linecap:round;stroke-linejoin:round;fill:none}
 .go-cal svg{width:20px;height:20px}
 .btn-create svg{width:17px;height:17px}
+
+/* =========================================================
+   POLIMENTO GERAL — Alinhamentos e refinamentos
+   ========================================================= */
+
+/* Cabeçalho: relógio e botão nivelados */
+.clock-info .weekday{font-size:20px;font-weight:700;letter-spacing:-.01em;text-transform:capitalize}
+
+/* Stats: altura mínima consistente */
+.stat{min-height:90px;display:flex;flex-direction:column;justify-content:center}
+.stat .value{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:4px}
+
+/* Accordion: melhor espaçamento no mobile */
+@media (max-width:560px){
+  .acc-head{padding:13px 14px}
+  .acc-name{font-size:14px}
+  .acc-body .cards{padding:12px 14px 14px}
+}
+
+/* Roteiros: grid mais fluido */
+.roteiros-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+
+/* Modal: scrollbar mais bonita */
+.detail-body::-webkit-scrollbar,.roteiro-modal-body::-webkit-scrollbar,.rd-content::-webkit-scrollbar{width:4px}
+.detail-body::-webkit-scrollbar-track,.roteiro-modal-body::-webkit-scrollbar-track,.rd-content::-webkit-scrollbar-track{background:transparent}
+.detail-body::-webkit-scrollbar-thumb,.roteiro-modal-body::-webkit-scrollbar-thumb,.rd-content::-webkit-scrollbar-thumb{background:rgba(60,60,67,.25);border-radius:4px}
+
+/* Editor de roteiros: scrollbar */
+.editor-body::-webkit-scrollbar{width:4px}
+.editor-body::-webkit-scrollbar-thumb{background:rgba(60,60,67,.2);border-radius:4px}
+
+/* Cards de tarefa: transição mais suave */
+.task-card{transition:.2s cubic-bezier(.2,.8,.2,1)}
+
+/* Legenda do calendário: itens inativos */
+.lg-item.inativa{opacity:.45}
+
+/* Botão de nova tarefa no modal do dia */
+.day-new-btn{border-radius:10px}
+
+/* Configurações: melhor espaçamento entre cards */
+.cfg-card + .cfg-card{margin-top:0}
+
+/* Sidebar no mobile: ícones com label */
+@media (max-width:760px){
+  .menu-item span{display:none}
+  .menu-item.active span{display:inline}
+  .menu-item{padding:10px 14px;gap:0;justify-content:center}
+  .menu-item.active{gap:10px;justify-content:flex-start}
+}
