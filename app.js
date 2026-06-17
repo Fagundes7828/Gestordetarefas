@@ -105,8 +105,9 @@ window.openTaskModal = function (tarefa = null) {
   g("tkTitle").value = tarefa?.titulo || "";
   g("tkDesc").value = tarefa?.descricao || "";
   g("tkPriority").value = tarefa?.prioridade || "media";
-  g("tkStart").value = tarefa?.inicio || dataHojeISO();
-  g("tkDue").value = tarefa?.conclusao || dataHojeISO();
+  const dataDefault = window._diaSelecionado || dataHojeISO();
+  g("tkStart").value = tarefa?.inicio || dataDefault;
+  g("tkDue").value = tarefa?.conclusao || dataDefault;
   g("tkTime").value = tarefa?.hora || "";
   g("tkStatus").value = tarefa?.status || "pendente";
   g("tkProject").value = tarefa?.projeto || "";
@@ -122,6 +123,7 @@ window.closeTaskModal = () => {
   document.getElementById("taskOverlay").style.display = "none";
   document.getElementById("catDropdown")?.classList.remove("open");
   editandoId = null;
+  window._diaSelecionado = null;
 };
 
 window.saveTask = async function () {
@@ -436,8 +438,10 @@ function mostrarPopover(e, iso, evs, expandido) {
 function esconderPopover() { const p = popover(); p.style.display = "none"; p.classList.remove("expanded"); }
 
 /* ---------- Modal de detalhes do dia ---------- */
+window._diaSelecionado = null; // guarda o dia clicado no calendário
 window.openDayModal = function (iso, evs) {
   esconderPopover();
+  window._diaSelecionado = iso; // salva para usar ao criar tarefa
   const dObj = new Date(iso + "T00:00:00");
   const [yy,mm,dd] = iso.split("-");
   document.getElementById("dayTitle").textContent = `${dd} de ${MESES[+mm-1]} de ${yy}`;
@@ -860,8 +864,10 @@ let accAberta = null;
 /* ---------- Clique nos cards de estatística do Dashboard ---------- */
 window.irParaTarefas = function (categoria) {
   goPage("tarefas");
-  // "todas" abre Todas; demais abrem a categoria correspondente
-  abrirAcc(categoria);
+  // mapeia nome do stat para o data-cat correto do accordion
+  const catMap = { todas:"todas", concluida:"concluida", pendente:"pendente", atrasada:"atrasada" };
+  const cat = catMap[categoria] || "todas";
+  abrirAcc(cat);
 };
 
 /* ---------- Abrir/fechar uma categoria ---------- */
@@ -906,11 +912,12 @@ function filtrarBusca(lista) {
 window.renderTarefasAccordion = function () {
   const base = filtrarBusca(tarefas);
 
+  const todasBase = filtrarBusca(tarefas); // sempre usa todas para os grupos
   const grupos = {
     todas:     base,
-    pendente:  base.filter(t => t.status === "pendente" || t.status === "andamento"),
-    concluida: base.filter(t => t.status === "concluida"),
-    atrasada:  base.filter(t => t.status !== "concluida" && diasDeAtraso(t.conclusao) > 0)
+    pendente:  todasBase.filter(t => t.status === "pendente" || t.status === "andamento"),
+    concluida: todasBase.filter(t => t.status === "concluida"),
+    atrasada:  todasBase.filter(t => t.status !== "concluida" && diasDeAtraso(t.conclusao) > 0)
   };
 
   // contadores em tempo real
