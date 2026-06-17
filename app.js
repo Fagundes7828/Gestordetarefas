@@ -88,6 +88,7 @@ function escutarTarefas() {
   onSnapshot(q, (snap) => {
     tarefas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
+    renderLegenda();
     if (document.getElementById("page-calendario").classList.contains("active")) renderCalendar();
   }, (err) => console.error("Erro ao ler tarefas:", err));
 }
@@ -168,16 +169,28 @@ window.saveTask = async function () {
    AÇÕES sobre tarefas
 --------------------------------------------------------- */
 window.concluir = async (id) => {
+  const t = tarefas.find(x => x.id === id);
+  // se for tarefa-espelho de roteiro, finaliza o roteiro (que sincroniza a tarefa)
+  if (t?.roteiroId) { finalizarRoteiro(t.roteiroId); return; }
   try { await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", id), { status: "concluida" }); }
   catch (err) { console.error(err); }
 };
 window.excluir = async (id) => {
+  const t = tarefas.find(x => x.id === id);
+  // se for tarefa-espelho, redireciona para excluir o roteiro
+  if (t?.roteiroId) {
+    if (confirm("Esta gravação está vinculada a um roteiro. Deseja excluir o roteiro e a gravação?")) {
+      excluirRoteiro(t.roteiroId); closeDayModal(); closeTaskDetail();
+    }
+    return;
+  }
   if (!confirm("Excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
   try { await deleteDoc(doc(db, "usuarios", usuario.uid, "tarefas", id)); closeDayModal(); }
   catch (err) { console.error(err); }
 };
 window.duplicar = async (id) => {
   const t = tarefas.find(x => x.id === id); if (!t) return;
+  if (t.roteiroId) { alert("Gravações vinculadas a roteiros não podem ser duplicadas. Crie um novo roteiro."); return; }
   const copia = { ...t, titulo: t.titulo + " (cópia)", criadoEm: serverTimestamp() };
   delete copia.id;
   try { await addDoc(collection(db, "usuarios", usuario.uid, "tarefas"), copia); }
@@ -185,6 +198,8 @@ window.duplicar = async (id) => {
 };
 window.editarTarefa = (id) => {
   const t = tarefas.find(x => x.id === id); if (!t) return;
+  // tarefa-espelho: abre o roteiro para edição
+  if (t.roteiroId) { closeDayModal(); const r = roteiros.find(x => x.id === t.roteiroId); if (r) openRoteiroModal(r); return; }
   closeDayModal(); openTaskModal(t);
 };
 
@@ -841,8 +856,16 @@ function renderLegenda() {
   const box = document.getElementById("calLegendList");
   if (!box) return;
   box.innerHTML = "";
+  // item fixo: gravações vinculadas a roteiros
+  const temGravacao = tarefas.some(t => t.roteiroId);
+  if (temGravacao) {
+    const g = document.createElement("div");
+    g.className = "lg-item";
+    g.innerHTML = `<span class="dot" style="background:#ff2d92"></span><span>🎬 Gravação (roteiro)</span>`;
+    box.appendChild(g);
+  }
   if (!categorias.length) {
-    box.innerHTML = `<div class="lg-empty">Cadastre categorias para ver a legenda.</div>`;
+    if (!temGravacao) box.innerHTML = `<div class="lg-empty">Cadastre categorias para ver a legenda.</div>`;
     return;
   }
   categorias.forEach(c => {
@@ -988,6 +1011,12 @@ function cardTarefa(t) {
 window.openTaskDetail = function (id) {
   const t = tarefas.find(x => x.id === id);
   if (!t) return;
+
+  // INTEGRAÇÃO: se a tarefa está vinculada a um roteiro, abre o roteiro
+  if (t.roteiroId) {
+    const r = roteiros.find(x => x.id === t.roteiroId);
+    if (r) { openRoteiroDetail(r.id); return; }
+  }
 
   // barra de cor
   const bar = document.getElementById("detailColorBar");
@@ -1305,38 +1334,82 @@ window.salvarRoteiro = async function () {
   if (!titulo) { a.textContent = "Dê um título ao roteiro."; a.className = "alert show error"; return; }
   if (!dataGravacao) { a.textContent = "Informe a data da gravação."; a.className = "alert show error"; return; }
 
+  const status = document.getElementById("rtStatus").value;
   const dados = {
     titulo,
     dataGravacao,
     conteudo,
-    status: document.getElementById("rtStatus").value,
+    status,
     atualizadoEm: serverTimestamp()
   };
   const btn = document.getElementById("btnSalvarRoteiro");
   btn.disabled = true; btn.textContent = "Salvando...";
   try {
+    let roteiroId;
     if (roteiroEditandoId) {
-      await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", roteiroEditandoId), dados);
+      roteiroId = roteiroEditandoId;
+      await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", roteiroId), dados);
     } else {
       dados.criadoEm = serverTimestamp();
-      await addDoc(collection(db, "usuarios", usuario.uid, "roteiros"), dados);
+      const ref = await addDoc(collection(db, "usuarios", usuario.uid, "roteiros"), dados);
+      roteiroId = ref.id;
     }
+    // INTEGRAÇÃO COM CALENDÁRIO: cria/atualiza a tarefa-espelho vinculada
+    await sincronizarTarefaRoteiro(roteiroId, titulo, dataGravacao, status);
     closeRoteiroModal();
   } catch (err) {
     console.error(err); a.textContent = "Não foi possível salvar."; a.className = "alert show error";
   } finally { btn.disabled = false; btn.textContent = "Salvar Roteiro"; }
 };
 
+/* ---------- Integração Roteiro ↔ Calendário ---------- */
+// Cria ou atualiza uma tarefa "espelho" que representa a gravação no calendário.
+// A tarefa é marcada com roteiroId para vinculação e renderização especial.
+async function sincronizarTarefaRoteiro(roteiroId, titulo, dataGravacao, statusRoteiro) {
+  const existente = tarefas.find(t => t.roteiroId === roteiroId);
+  const statusTarefa = statusRoteiro === "finalizado" ? "concluida" : "pendente";
+  const dadosTarefa = {
+    titulo: "🎬 Gravação: " + titulo,
+    descricao: "Gravação vinculada a um roteiro. Abra o roteiro para ver o conteúdo completo.",
+    categoria: "Gravação",
+    prioridade: "alta",
+    status: statusTarefa,
+    cor: "#ff2d92",            // cor própria de gravação (rosa/magenta)
+    inicio: dataGravacao,
+    conclusao: dataGravacao,
+    hora: null,
+    projeto: "Roteiros",
+    roteiroId: roteiroId        // marca a vinculação
+  };
+  try {
+    if (existente) {
+      await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", existente.id), dadosTarefa);
+    } else {
+      dadosTarefa.criadoEm = serverTimestamp();
+      await addDoc(collection(db, "usuarios", usuario.uid, "tarefas"), dadosTarefa);
+    }
+  } catch (err) { console.error("Erro ao sincronizar tarefa do roteiro:", err); }
+}
+
 /* ---------- Ações nos cards ---------- */
 async function finalizarRoteiro(id) {
-  try { await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", id), { status:"finalizado", atualizadoEm:serverTimestamp() }); }
-  catch (err) { console.error(err); }
+  try {
+    await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", id), { status:"finalizado", atualizadoEm:serverTimestamp() });
+    // marca a tarefa-espelho como concluída
+    const vinculada = tarefas.find(t => t.roteiroId === id);
+    if (vinculada) await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", vinculada.id), { status:"concluida" });
+  } catch (err) { console.error(err); }
 }
 
 async function excluirRoteiro(id) {
-  if (!confirm("Excluir este roteiro? Esta ação não pode ser desfeita.")) return;
-  try { await deleteDoc(doc(db, "usuarios", usuario.uid, "roteiros", id)); closeRoteiroDetail(); }
-  catch (err) { console.error(err); }
+  if (!confirm("Excluir este roteiro? A gravação vinculada no calendário também será removida.")) return;
+  try {
+    await deleteDoc(doc(db, "usuarios", usuario.uid, "roteiros", id));
+    // remove a tarefa-espelho vinculada
+    const vinculada = tarefas.find(t => t.roteiroId === id);
+    if (vinculada) await deleteDoc(doc(db, "usuarios", usuario.uid, "tarefas", vinculada.id));
+    closeRoteiroDetail();
+  } catch (err) { console.error(err); }
 }
 
 /* ---------- Modal de visualização completa ---------- */
