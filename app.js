@@ -21,6 +21,7 @@ let tarefas = [];
 let editandoId = null;                 // id da tarefa em edição (null = nova)
 let calRef = new Date();               // mês/ano em exibição no calendário
 let prefs = {                          // preferências do usuário (Visualizações)
+  tema: "light",
   paginaInicial: "inicio",
   primeiroDia: 0,
   mostrarFDS: true,
@@ -1167,6 +1168,7 @@ async function carregarPrefs() {
       prefs = { ...prefs, ...snap.data().prefs };
     }
   } catch (err) { console.error(err); }
+  aplicarTemaSalvo();
   aplicarPrefsUI();
   aplicarPrefsCalendario();
   aplicarPrefAtraso();
@@ -1506,3 +1508,40 @@ function getWeekNumber(d) {
 
 
 // goPage consolidado no wrapper de roteiros abaixo
+
+/* =========================================================
+   TEMA — Claro / Escuro / Automático (padrão Apple)
+   ========================================================= */
+
+// aplica o tema no documento
+function aplicarTema(modo) {
+  const root = document.documentElement;
+  let efetivo = modo;
+  if (modo === "auto") {
+    efetivo = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  root.classList.toggle("dark", efetivo === "dark");
+  // marca o botão ativo no seletor
+  document.querySelectorAll(".theme-opt").forEach(b =>
+    b.classList.toggle("active", b.dataset.theme === modo));
+}
+
+// chamado pelos botões do seletor
+window.setTheme = function (modo) {
+  prefs.tema = modo;
+  aplicarTema(modo);
+  try { localStorage.setItem("mf-tema", modo); } catch(e){}
+  salvarPref("tema", modo);
+};
+
+// reage a mudanças do tema do sistema quando está em "auto"
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if ((prefs.tema || "auto") === "auto") aplicarTema("auto");
+});
+
+// aplica o tema salvo assim que as preferências carregam
+function aplicarTemaSalvo() {
+  const modo = prefs.tema || "light";
+  aplicarTema(modo);
+  try { localStorage.setItem("mf-tema", modo); } catch(e){}
+}
