@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MF Agenda</title>
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // aplica o tema salvo imediatamente, antes de renderizar (evita flash)
+    (function(){
+      try {
+        var t = localStorage.getItem("mf-tema") || "light";
+        var dark = t === "dark" || (t === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (dark) document.documentElement.classList.add("dark");
+      } catch(e){}
+    })();
+  </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a84ff'/><text y='.9em' font-size='70' x='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-weight='bold' font-family='system-ui'>MF</text></svg>">
 </head>
 <body class="app">
@@ -320,11 +330,22 @@
           <!-- Tema -->
           <div class="cfg-card">
             <h3>🎨 Tema</h3>
-            <p class="cfg-hint">Personalização visual do sistema.</p>
-            <div class="pref-row">
-              <div class="pref-info"><span class="pref-label">Claro / Escuro</span><span class="pref-desc">Implementação em módulo futuro.</span></div>
-              <span class="pref-soon">Em breve</span>
+            <p class="cfg-hint">Escolha a aparência do sistema.</p>
+            <div class="theme-options">
+              <button class="theme-opt" data-theme="light" onclick="setTheme('light')">
+                <span class="theme-preview tp-light"></span>
+                <span class="theme-name">Claro</span>
+              </button>
+              <button class="theme-opt" data-theme="dark" onclick="setTheme('dark')">
+                <span class="theme-preview tp-dark"></span>
+                <span class="theme-name">Escuro</span>
+              </button>
+              <button class="theme-opt" data-theme="auto" onclick="setTheme('auto')">
+                <span class="theme-preview tp-auto"></span>
+                <span class="theme-name">Automático</span>
+              </button>
             </div>
+            <p class="cfg-hint" style="margin-top:10px;margin-bottom:0">No modo automático, o sistema segue o tema do seu aparelho.</p>
           </div>
 
           <!-- Geral -->
