@@ -1131,3 +1131,20 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
 :root.dark .cal-cell.muted{opacity:.4}
 :root.dark .tc-cat,:root.dark .dt-badge{background:rgba(118,118,128,.3);color:var(--text-soft)}
 :root.dark .pref-soon{background:rgba(10,132,255,.2)}
+
+/* =========================================================
+   BLOCO CONCLUÍDAS HOJE (Dashboard)
+   ========================================================= */
+.done-card{opacity:.92}
+.done-card .done-title{
+  text-decoration:line-through;text-decoration-color:var(--text-soft);
+  text-decoration-thickness:1.5px;color:var(--text-soft);
+}
+.done-card .tc-due{color:var(--success);font-weight:600}
+.reabrir-btn{
+  font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:none;
+  background:rgba(10,132,255,.12);color:var(--blue);border-radius:8px;padding:4px 11px;transition:.15s;
+}
+.reabrir-btn:hover{background:rgba(10,132,255,.22)}
+:root.dark .reabrir-btn{background:rgba(10,132,255,.22)}
+:root.dark .reabrir-btn:hover{background:rgba(10,132,255,.32)}
