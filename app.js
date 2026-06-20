@@ -1155,6 +1155,7 @@ window.switchCfgTab = function (tab) {
     b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".cfg-tab-content").forEach(c =>
     c.classList.toggle("active", c.id === "cfgtab-" + tab));
+  if (tab === "integracoes") { initGoogleCalendar(); atualizarStatusGcal(); }
 };
 
 /* ---------- Método de Conexão ---------- */
@@ -1609,3 +1610,135 @@ function aplicarTemaSalvo() {
   aplicarTema(modo);
   try { localStorage.setItem("mf-tema", modo); } catch(e){}
 }
+
+/* =========================================================
+   INTEGRAÇÃO GOOGLE CALENDAR — Fase 1 (envio)
+   ========================================================= */
+
+const GCAL_CLIENT_ID = "963529011516-evo8c33955js4mke5umblvdv9jmjvlgs.apps.googleusercontent.com";
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+
+let gcalTokenClient = null;
+let gcalAccessToken = null;
+let gcalConectado = false;
+
+// inicializa o cliente de token do Google (chamado quando entra em Integrações)
+function initGoogleCalendar() {
+  if (gcalTokenClient || !window.google?.accounts?.oauth2) return;
+  gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: GCAL_SCOPE,
+    callback: (resp) => {
+      if (resp.error) { gcalLog("Erro ao autorizar: " + resp.error, true); return; }
+      gcalAccessToken = resp.access_token;
+      gcalConectado = true;
+      atualizarStatusGcal();
+      gcalLog("✓ Conectado ao Google Calendar!", false, true);
+      // sincroniza automaticamente ao conectar
+      sincronizarTudoGoogle();
+    }
+  });
+}
+
+window.conectarGoogleCalendar = function () {
+  if (!gcalTokenClient) initGoogleCalendar();
+  if (!gcalTokenClient) { gcalLog("Aguarde o Google carregar e tente de novo.", true); return; }
+  gcalTokenClient.requestAccessToken({ prompt: "consent" });
+};
+
+window.desconectarGoogleCalendar = function () {
+  if (gcalAccessToken && window.google?.accounts?.oauth2) {
+    google.accounts.oauth2.revoke(gcalAccessToken, () => {});
+  }
+  gcalAccessToken = null;
+  gcalConectado = false;
+  atualizarStatusGcal();
+  gcalLog("Desconectado do Google Calendar.");
+};
+
+function atualizarStatusGcal() {
+  const dot = document.getElementById("gcalDot");
+  const title = document.getElementById("gcalStatusTitle");
+  const desc = document.getElementById("gcalStatusDesc");
+  const connectBtn = document.getElementById("gcalConnectBtn");
+  const syncBtn = document.getElementById("gcalSyncBtn");
+  const disconnectBtn = document.getElementById("gcalDisconnectBtn");
+  if (!dot) return;
+  if (gcalConectado) {
+    dot.classList.add("on");
+    title.textContent = "Conectado";
+    desc.textContent = "Suas tarefas e gravações são enviadas ao Google Calendar.";
+    connectBtn.style.display = "none";
+    syncBtn.style.display = "";
+    disconnectBtn.style.display = "";
+  } else {
+    dot.classList.remove("on");
+    title.textContent = "Não conectado";
+    desc.textContent = "Conecte para sincronizar com o Google Calendar.";
+    connectBtn.style.display = "";
+    syncBtn.style.display = "none";
+    disconnectBtn.style.display = "none";
+  }
+}
+
+function gcalLog(msg, erro = false, ok = false) {
+  const box = document.getElementById("gcalLog");
+  if (!box) return;
+  const linha = document.createElement("div");
+  linha.className = "log-line" + (erro ? " log-err" : ok ? " log-ok" : "");
+  const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  linha.textContent = `[${hora}] ${msg}`;
+  box.prepend(linha);
+  // mantém só as 8 últimas linhas
+  while (box.children.length > 8) box.removeChild(box.lastChild);
+}
+
+// envia uma tarefa como evento do Google Calendar
+async function enviarEventoGoogle(tarefa) {
+  if (!gcalAccessToken) return false;
+  if (!tarefa.inicio && !tarefa.conclusao) return false; // sem data, não envia
+
+  const dataEvento = tarefa.conclusao || tarefa.inicio;
+  const ehGravacao = !!tarefa.roteiroId;
+
+  // monta o evento (dia inteiro)
+  const evento = {
+    summary: tarefa.titulo,
+    description: (tarefa.descricao || "") + "\n\n— Enviado pelo MF Agenda",
+    start: { date: dataEvento },
+    end: { date: dataEvento },
+    colorId: ehGravacao ? "4" : "7",   // 4=rosa (gravação), 7=azul (tarefa)
+    extendedProperties: { private: { mfAgendaId: tarefa.id } }
+  };
+
+  try {
+    const resp = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + gcalAccessToken, "Content-Type": "application/json" },
+      body: JSON.stringify(evento)
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || resp.status);
+    }
+    return true;
+  } catch (err) {
+    console.error("Erro ao enviar evento:", err);
+    gcalLog("Erro ao enviar '" + tarefa.titulo + "': " + err.message, true);
+    return false;
+  }
+}
+
+// sincroniza todas as tarefas/gravações com data para o Google Calendar
+window.sincronizarTudoGoogle = async function () {
+  if (!gcalAccessToken) { gcalLog("Conecte-se primeiro.", true); return; }
+  const comData = tarefas.filter(t => t.inicio || t.conclusao);
+  if (!comData.length) { gcalLog("Nenhuma tarefa com data para enviar."); return; }
+  gcalLog(`Enviando ${comData.length} item(ns) para o Google Calendar...`);
+  let ok = 0, falha = 0;
+  for (const t of comData) {
+    const sucesso = await enviarEventoGoogle(t);
+    if (sucesso) ok++; else falha++;
+  }
+  gcalLog(`Concluído: ${ok} enviado(s)${falha ? ", " + falha + " falha(s)" : ""}.`, falha > 0, falha === 0);
+};
