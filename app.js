@@ -173,7 +173,17 @@ window.concluir = async (id) => {
   const t = tarefas.find(x => x.id === id);
   // se for tarefa-espelho de roteiro, finaliza o roteiro (que sincroniza a tarefa)
   if (t?.roteiroId) { finalizarRoteiro(t.roteiroId); return; }
-  try { await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", id), { status: "concluida" }); }
+  try { await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", id), { status: "concluida", concluidaEm: serverTimestamp() }); }
+  catch (err) { console.error(err); }
+};
+// Reabrir uma tarefa concluída (volta para pendente)
+window.reabrir = async (id) => {
+  const t = tarefas.find(x => x.id === id);
+  if (t?.roteiroId) {
+    // tarefa-espelho: reabre o roteiro vinculado
+    try { await updateDoc(doc(db, "usuarios", usuario.uid, "roteiros", t.roteiroId), { status: "elaboracao", atualizadoEm: serverTimestamp() }); } catch(e){ console.error(e); }
+  }
+  try { await updateDoc(doc(db, "usuarios", usuario.uid, "tarefas", id), { status: "pendente", concluidaEm: null }); }
   catch (err) { console.error(err); }
 };
 window.excluir = async (id) => {
@@ -261,7 +271,61 @@ function render() {
   renderCards("pendCards", pend, "Nenhuma tarefa pendente. Tudo em dia! 🎉");
   document.getElementById("pendCount").textContent = pend.length ? `${pend.length} item(ns)` : "";
 
+  // Concluídas HOJE
+  const hojeISO = dataHojeISO();
+  const concluidasHoje = tarefas.filter(t => t.status === "concluida" && foiConcluidaHoje(t, hojeISO));
+  renderCardsConcluidas("doneCards", concluidasHoje);
+  document.getElementById("doneCount").textContent = concluidasHoje.length ? `${concluidasHoje.length} hoje` : "";
+
   renderTarefasAccordion();
+}
+
+// verifica se a tarefa foi concluída hoje (usa concluidaEm; fallback: data de conclusão prevista)
+function foiConcluidaHoje(t, hojeISO) {
+  if (t.concluidaEm?.toDate) {
+    const d = t.concluidaEm.toDate();
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    return iso === hojeISO;
+  }
+  // fallback para tarefas antigas sem concluidaEm: usa a data de conclusão prevista
+  return t.conclusao === hojeISO;
+}
+
+function renderCardsConcluidas(containerId, lista) {
+  const box = document.getElementById(containerId);
+  const head = document.getElementById("doneHead");
+  box.innerHTML = "";
+  if (!lista.length) {
+    // esconde a seção inteira quando não há concluídas hoje
+    head.style.display = "none";
+    box.style.display = "none";
+    return;
+  }
+  head.style.display = "";
+  box.style.display = "";
+  lista.forEach(t => box.appendChild(cardConcluida(t)));
+}
+
+// card de tarefa concluída hoje (com botão reabrir)
+function cardConcluida(t) {
+  const el = document.createElement("div");
+  el.className = "task-card lv-green clickable done-card";
+  el.style.borderLeftColor = t.cor || "var(--success)";
+  el.onclick = () => openTaskDetail(t.id);
+  const hora = t.concluidaEm?.toDate ? t.concluidaEm.toDate().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "";
+  el.innerHTML = `
+    <div class="tc-head"><div class="tc-title done-title"></div><span class="tc-cat"></span></div>
+    <div class="tc-due">✅ Concluída${hora ? " às "+hora : ""}</div>
+    <div class="tc-body"></div>
+    <div class="tc-foot">
+      <span class="tc-status st-concluida">Concluída</span>
+      <button class="reabrir-btn">↩ Reabrir</button>
+    </div>`;
+  el.querySelector(".tc-title").textContent = t.titulo;
+  el.querySelector(".tc-cat").textContent = t.categoria || "Geral";
+  el.querySelector(".tc-body").textContent = t.descricao || "Sem descrição.";
+  el.querySelector(".reabrir-btn").onclick = e => { e.stopPropagation(); reabrir(t.id); };
+  return el;
 }
 function renderCards(containerId, lista, vazio) {
   const box = document.getElementById(containerId); box.innerHTML = "";
