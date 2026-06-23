@@ -109,7 +109,6 @@ body{
   box-shadow:0 10px 24px -8px rgba(10,132,255,.6);
 }
 .logo h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
-.subtitle{font-size:14px;color:var(--text-soft);margin-top:3px}
 
 /* ---------- Segmented control (abas) ---------- */
 .segment{
@@ -121,13 +120,11 @@ body{
   background:var(--surface-strong);border-radius:11px;box-shadow:0 2px 6px rgba(0,0,0,.12);
   transition:transform .32s cubic-bezier(.2,.8,.2,1);
 }
-.segment-thumb.right{transform:translateX(100%)}
 .segment-btn{
   flex:1;position:relative;z-index:1;background:none;border:none;cursor:pointer;
   font-family:var(--font);font-size:15px;font-weight:600;color:var(--text-soft);
   padding:9px 0;transition:color .25s;
 }
-.segment-btn.active{color:var(--text)}
 
 /* ---------- Alerta ---------- */
 .alert{
@@ -176,9 +173,6 @@ body{
 .btn-google:hover{background:var(--hover-bg)}
 
 /* ---------- Divisor "ou" ---------- */
-.divider{display:flex;align-items:center;text-align:center;color:var(--text-soft);font-size:13px;margin:2px 0}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(60,60,67,.18)}
-.divider span{padding:0 12px}
 
 /* ---------- Responsivo ---------- */
 @media (max-width:420px){
@@ -499,7 +493,6 @@ body.app{
 .dt-badges{display:flex;flex-wrap:wrap;gap:6px}
 .dt-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--border-soft);color:var(--text-soft)}
 .dt-desc{font-size:13px;color:var(--text-soft);line-height:1.4}
-.dt-info{font-size:12px;color:var(--text-soft)}
 .dt-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .dt-btn{
   font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;border:none;
@@ -557,7 +550,6 @@ body.app{
 .avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:18px}
 .avatar-big{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;color:#fff;font-size:24px;font-weight:700;
   background:linear-gradient(145deg,var(--blue),#5e5ce6);box-shadow:0 10px 22px -8px rgba(10,132,255,.6);flex-shrink:0}
-.avatar-colors{display:flex;gap:8px;flex-wrap:wrap}
 .ac{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.12s}
 .ac.sel{border-color:var(--text)}
 
@@ -577,10 +569,8 @@ body.app{
 .cat .x{cursor:pointer;color:var(--text-soft);font-weight:700;margin-left:2px}
 .cat .x:hover{color:var(--danger)}
 .cats-empty{font-size:13px;color:var(--text-soft)}
-.add-cat{display:flex;gap:8px}
 .add-cat input{flex:1;font-family:var(--font);font-size:14px;color:var(--text);background:var(--field-bg);
   border:1px solid var(--glass-border);border-radius:12px;padding:11px 14px}
-.add-cat input:focus{outline:none;border-color:var(--blue)}
 
 @media (max-width:760px){
   .topbar{top:0;border-radius:0 0 18px 18px}
@@ -592,7 +582,6 @@ body.app{
 .cfg-card .field{margin-bottom:14px}
 .cfg-card .btn-primary,.cfg-card .btn-soft{margin-top:2px}
 .avatar-row{padding-bottom:4px}
-.avatar-colors{align-items:center}
 #page-config .section-head{margin-bottom:14px}
 #page-config .section-head h2{font-size:24px;font-weight:700;letter-spacing:-.01em}
 .cfg-card h3{display:flex;align-items:center;gap:9px}
@@ -1148,20 +1137,3 @@ input[type=color]::-moz-color-swatch{border:none;border-radius:7px}
 .reabrir-btn:hover{background:rgba(10,132,255,.22)}
 :root.dark .reabrir-btn{background:rgba(10,132,255,.22)}
 :root.dark .reabrir-btn:hover{background:rgba(10,132,255,.32)}
-
-/* =========================================================
-   INTEGRAÇÕES — Google Calendar
-   ========================================================= */
-.integ-status{display:flex;align-items:center;gap:13px;background:var(--surface-soft);
-  border:1px solid var(--glass-border);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-.integ-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;background:#8e8e93;
-  box-shadow:0 0 0 4px rgba(142,142,147,.18)}
-.integ-dot.on{background:var(--success);box-shadow:0 0 0 4px rgba(52,199,89,.2)}
-.integ-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.integ-text b{font-size:14.5px;font-weight:700;color:var(--text)}
-.integ-text span{font-size:12.5px;color:var(--text-soft)}
-.integ-actions{display:flex;gap:10px;flex-wrap:wrap}
-.integ-log{margin-top:14px;font-size:12.5px;color:var(--text-soft);line-height:1.6}
-.integ-log .log-ok{color:var(--success)}
-.integ-log .log-err{color:var(--danger)}
-.integ-log .log-line{padding:3px 0;border-bottom:1px solid var(--border-soft)}
