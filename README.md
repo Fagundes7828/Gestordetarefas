@@ -1,87 +1,85 @@
-# MF Agenda
+# MF Agenda — v1.0
 
-> Aplicação web pessoal de organização, planejamento e gerenciamento de tarefas, compromissos e roteiros de gravação — com sincronização em nuvem via Firebase.
+> Sistema pessoal de organização, planejamento de tarefas e gerenciamento de roteiros de gravação, com sincronização em nuvem via Firebase e modo escuro estilo Apple.
 
 **🌐 Acesso:** [fagundes7828.github.io/Gestordetarefas](https://fagundes7828.github.io/Gestordetarefas/)
+**📦 Versão:** 1.0 (estável)
+**👤 Autor:** Mateus Fagundes — [@Fagundes7828](https://github.com/Fagundes7828)
+
+---
+
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Tecnologias](#tecnologias)
+- [Estrutura de Arquivos](#estrutura-de-arquivos)
+- [Banco de Dados](#banco-de-dados-firestore)
+- [Configuração do Firebase](#configuração-do-firebase)
+- [Como Publicar Atualizações](#como-publicar-atualizações)
+- [Versionamento e Tags](#versionamento-e-tags)
+- [Roadmap](#roadmap-funcionalidades-futuras)
 
 ---
 
 ## Visão Geral
 
-O **MF Agenda** é uma plataforma pessoal desenvolvida do zero em HTML, CSS e JavaScript puro, sem frameworks ou ferramentas de build. O objetivo é centralizar o gerenciamento de tarefas diárias, compromissos, projetos e roteiros de gravação de vídeo em um único lugar, com visual moderno inspirado no iOS e sincronização completa com a nuvem.
+O **MF Agenda** é uma aplicação web desenvolvida do zero em HTML, CSS e JavaScript puro, sem frameworks ou ferramentas de build. Centraliza o gerenciamento de tarefas, compromissos, projetos e roteiros de gravação de vídeo em um único lugar, com visual moderno inspirado no iOS, sincronização completa com a nuvem e suporte a tema claro e escuro.
 
 ---
 
 ## Funcionalidades
 
 ### 🔐 Autenticação
-- Login e cadastro com **e-mail e senha**
-- Login com **Google** (OAuth via Firebase)
-- Proteção de rotas (acesso ao app exige login)
-- Sessão persistente via Firebase Authentication
+- Login e cadastro com e-mail e senha
+- Login com Google (OAuth via Firebase)
+- Proteção de rotas e sessão persistente
 
-### 🏠 Dashboard (Tela Inicial)
-- Relógio em tempo real no fuso **GMT-3 (Brasília)**
-- Cards de estatísticas clicáveis: Total, Concluídas, Pendentes, Atrasadas e Taxa de conclusão
-- Seção de **tarefas pendentes e atrasadas** com cards visuais
-- Indicadores de urgência por cor (verde / amarelo / vermelho / vermelho intenso)
-- Tempo de atraso calculado automaticamente ("atrasada há 2 dias", "atrasada há 1 semana"...)
+### 🏠 Dashboard
+- Relógio em tempo real (GMT-3, Brasília)
+- Cards de estatísticas: Total, Concluídas, Pendentes, Atrasadas e Taxa de conclusão
+- Seção de tarefas pendentes e atrasadas com indicadores de urgência
+- **Bloco "Concluídas hoje"** com botão de reabrir tarefa
+- Cálculo automático de tempo de atraso
 
 ### 📅 Calendário
-- Grade mensal com navegação por **mês e ano**
-- Início de semana configurável (Domingo ou Segunda-feira)
-- Tarefas aparecem tanto no **dia de início** quanto no **dia de conclusão**
-- Cores das tarefas herdadas da categoria
-- **Hover rápido** com pop-up de detalhes (desktop)
-- **Hover expandido** após 5 segundos com descrição completa
-- Clique no dia → modal completo com lista de tarefas + botão "Nova Tarefa"
+- Grade mensal com navegação por mês e ano
+- Início de semana configurável (Domingo ou Segunda)
+- Tarefas exibidas no dia de início e no dia de conclusão
+- Cores herdadas das categorias
+- Hover com detalhes e modal completo do dia
 - Filtros por Status, Prioridade e Categoria
-- **Legenda automática** gerada pelas categorias cadastradas
-- Responsivo para mobile (toque abre o modal do dia)
+- Legenda automática gerada pelas categorias
 
 ### ✅ Tarefas
-- Accordion por categoria: **Todas**, **Pendentes**, **Concluídas**, **Atrasadas**
-- Só uma categoria aberta por vez
-- **Barra de busca** por nome, categoria, projeto ou descrição
-- **Contadores em tempo real** ao lado de cada categoria
-- Ações em cada card: Editar, Concluir, Duplicar, Excluir
-- **Task Detail View** — modal único com a tarefa completa (descrição integral, sem corte)
+- Accordion por categoria (Todas, Pendentes, Concluídas, Atrasadas)
+- Busca por nome, categoria, projeto ou descrição
+- Contadores em tempo real
+- Modal de detalhe completo (Task Detail View) com descrição integral
+- Ações: Editar, Concluir, Duplicar, Excluir, Reabrir
 
 ### 📝 Roteiros
-- Tela dedicada ao gerenciamento de roteiros de gravação
-- Editor com toolbar: **Negrito**, **Itálico**, **Sublinhado**, Listas, Alinhamento
-- Campos: Título, Data da gravação, Status, Conteúdo
-- Status dos roteiros: **Em elaboração**, **Pronto para gravação**, **Gravado**, **Finalizado**
-- Cards com cor por status (azul / laranja / roxo / verde)
-- Visualização completa do roteiro sem limite de tamanho
-- Ações: Visualizar, Editar, Finalizar, Excluir
-- Filtro por status
+- Editor de texto com formatação (negrito, itálico, sublinhado, listas, alinhamento)
+- Campos: título, data da gravação, status e conteúdo
+- Status: Em elaboração, Pronto para gravação, Gravado, Finalizado
+- Cards com cor por status
+- Visualização completa sem limite de tamanho
+- **Integração com o Calendário**: ao definir uma data de gravação, é criada automaticamente uma "gravação" vinculada que aparece no calendário (em rosa). Editar, finalizar ou excluir o roteiro reflete na gravação, e vice-versa.
 
-### ⚙️ Configurações
+### ⚙️ Configurações (em abas)
+- **Perfil**: nome, descrição, cor do avatar, método de conexão, troca/recuperação de senha
+- **Categorias**: criar, editar, ativar/desativar e excluir, com cor livre e descrição
+- **Visualizações**: tema, página inicial, primeiro dia da semana e 7 opções de exibição do calendário
 
-**Perfil**
-- Editar nome de exibição e descrição
-- Escolher cor do avatar (18 opções)
-- Exibição do método de conexão (Google ou e-mail/senha)
-- Troca e recuperação de senha (somente contas e-mail/senha)
+### 🌙 Tema (estilo Apple)
+- Três modos: **Claro**, **Escuro** e **Automático** (segue o sistema)
+- Escuro "puro" no estilo Apple (preto/cinza profundo)
+- Preferência salva na nuvem e em cache local (sem flash ao carregar)
+- Transições suaves
 
-**Categorias**
-- Cadastrar categorias com **nome**, **cor livre** e **descrição opcional**
-- Ativar / Desativar / Editar / Excluir categorias
-- Categorias aparecem como dropdown na criação de tarefas
-- Cor da categoria herdada automaticamente pela tarefa (sobrescrita opcional)
-- Legenda do calendário gerada automaticamente
-
-**Visualizações**
-- Página inicial configurável (Dashboard, Calendário, Tarefas ou Roteiros)
-- Primeiro dia da semana (Domingo ou Segunda)
-- Mostrar / ocultar fins de semana no calendário
-- Mostrar / ocultar tarefas concluídas nas listas
-- Mostrar / ocultar indicadores de atraso
-- Ativar / desativar cores de categoria nos cards
-- Mostrar tarefas concluídas no calendário
-- Reduzir brilho de eventos passados
-- Mostrar número das semanas (padrão ISO)
+### 📱 Responsividade
+- Layout adaptado para desktop e mobile
+- No celular, o menu vira uma barra fixa inferior estilo app iOS
 
 ---
 
@@ -105,16 +103,16 @@ O **MF Agenda** é uma plataforma pessoal desenvolvida do zero em HTML, CSS e Ja
 Gestordetarefas/
 ├── index.html          # Tela de autenticação (login e cadastro)
 ├── app.html            # Aplicação principal (todas as telas internas)
-├── styles.css          # Estilos globais (autenticação + app)
-├── auth.js             # Lógica de autenticação (login, cadastro, Google)
-├── app.js              # Lógica do app (dashboard, calendário, tarefas, roteiros, configurações)
+├── styles.css          # Estilos globais (inclui tema claro e escuro)
+├── auth.js             # Lógica de autenticação
+├── app.js              # Lógica do app (dashboard, calendário, tarefas, roteiros, config)
 ├── firebase-config.js  # Configuração e inicialização do Firebase
 └── README.md           # Este arquivo
 ```
 
 ---
 
-## Estrutura do Banco de Dados (Firestore)
+## Banco de Dados (Firestore)
 
 ```
 usuarios/
@@ -123,8 +121,8 @@ usuarios/
     ├── bio               string
     ├── email             string
     ├── avatarCor         string (hex)
-    ├── categorias        array de objetos { nome, cor, descricao, ativa }
-    ├── prefs             objeto de preferências de visualização
+    ├── categorias        array de { nome, cor, descricao, ativa }
+    ├── prefs             objeto de preferências (tema, visualizações)
     ├── criadoEm          timestamp
     │
     ├── tarefas/
@@ -139,7 +137,9 @@ usuarios/
     │       ├── conclusao     string (YYYY-MM-DD)
     │       ├── hora          string (HH:MM)
     │       ├── projeto       string
-    │       └── criadoEm     timestamp
+    │       ├── roteiroId     string (se for gravação vinculada a um roteiro)
+    │       ├── concluidaEm   timestamp (quando foi concluída)
+    │       └── criadoEm      timestamp
     │
     └── roteiros/
         └── {roteiroId}/
@@ -151,11 +151,7 @@ usuarios/
             └── atualizadoEm  timestamp
 ```
 
----
-
-## Regras de Segurança (Firestore)
-
-Cada usuário só acessa os próprios dados. Cole no Firebase → Firestore → aba **Regras**:
+### Regras de Segurança (Firestore)
 
 ```js
 rules_version = '2';
@@ -175,64 +171,94 @@ service cloud.firestore {
 
 ## Configuração do Firebase
 
-1. Acesse [console.firebase.google.com](https://console.firebase.google.com) e crie um projeto.
+1. Acesse [console.firebase.google.com](https://console.firebase.google.com) e abra o projeto `mf-agenda`.
 2. Ative **Authentication** → E-mail/senha e Google.
-3. Crie o **Firestore Database** em modo de teste.
-4. Em **Configurações do projeto → Seus aplicativos**, registre um app Web e copie o `firebaseConfig`.
-5. Cole os valores em `firebase-config.js`, substituindo os placeholders.
-6. Em **Authentication → Settings → Domínios autorizados**, adicione `fagundes7828.github.io`.
-7. Aplique as **Regras de Segurança** acima no Firestore.
+3. Crie o **Firestore Database**.
+4. Em **Configurações do projeto → Seus aplicativos**, copie o `firebaseConfig` e cole em `firebase-config.js`.
+5. Em **Authentication → Settings → Domínios autorizados**, adicione `fagundes7828.github.io`.
+6. Aplique as **Regras de Segurança** acima no Firestore.
+
+---
+
+## Como Publicar Atualizações
+
+O projeto é hospedado no GitHub Pages. Para atualizar:
+
+1. No repositório, substitua o arquivo alterado (apague o antigo e suba o novo, ou edite direto).
+2. Aguarde de **2 a 10 minutos** (o GitHub Pages tem cache).
+3. Teste em uma **janela anônima** (Cmd+Shift+N) para evitar ver versões em cache.
+
+> **Dica:** muitos "bugs" aparentes são apenas cache. Sempre teste em janela anônima após esperar alguns minutos.
+
+---
+
+## Versionamento e Tags
+
+Este projeto usa **versionamento semântico** (`vMAJOR.MINOR.PATCH`):
+
+- `v1.0` — versão estável atual
+- `v1.1` — novas funcionalidades pequenas (ex: exportar PDF)
+- `v1.0.1` — correção de um bug pequeno
+- `v2.0` — mudanças grandes (ex: integração Google Calendar completa)
+
+### Como marcar uma versão (Release) no GitHub
+
+1. Acesse `github.com/Fagundes7828/Gestordetarefas/releases`
+2. Clique em **"Draft a new release"**
+3. Em **"Choose a tag"**, digite `v1.0` e confirme "Create new tag on publish"
+4. **Target:** `main`
+5. **Release title:** `MF Agenda v1.0 — Versão Estável`
+6. Adicione a descrição com as funcionalidades incluídas
+7. Clique em **"Publish release"**
+
+### Pela linha de comando (alternativa)
+
+```bash
+git tag -a v1.0 -m "Versão estável 1.0"
+git push origin v1.0
+```
+
+---
+
+## Histórico de Versões
+
+### v1.0 — Versão Estável (atual)
+Primeira versão estável e completa. Inclui:
+- Autenticação (e-mail/senha + Google)
+- Dashboard com estatísticas, relógio e bloco de concluídas hoje
+- Calendário mensal com filtros e legenda automática
+- Gerenciamento de tarefas (accordion, busca, detalhes)
+- Roteiros com editor formatado
+- Integração Roteiros ↔ Calendário
+- Configurações em abas (Perfil, Categorias, Visualizações)
+- Modo escuro (Claro / Escuro / Automático)
+- Layout responsivo (desktop e mobile)
+- Código revisado: sem duplicatas, sem código órfão, estrutura validada
+
+---
+
+## Roadmap (Funcionalidades Futuras)
+
+- [ ] Visualização de semana no calendário (estilo Apple)
+- [ ] Exportação de roteiros para PDF e Word
+- [ ] Integração com Google Calendar (configuração já preparada no Google Cloud)
+- [ ] Notificações de prazo
+- [ ] Drag and drop de tarefas no calendário
+- [ ] Controle de versões e histórico de roteiros
+- [ ] PWA (instalar como app no iPhone/Mac)
 
 ---
 
 ## Design System
 
-O projeto segue um **design system** consistente baseado em:
-
-- **Glassmorphism** — vidro fosco com `backdrop-filter: blur()` e bordas translúcidas
+- **Glassmorphism** — vidro fosco com `backdrop-filter`
 - **Estilo iOS** — bordas arredondadas, sombras suaves, animações fluidas
-- **Paleta** — gradiente azul-lavanda-rosa de fundo, azul `#0a84ff` como cor primária
-- **Tipografia** — System UI (SF Pro no iOS/macOS, Segoe UI no Windows, Roboto no Android)
-- **Responsividade** — menu lateral vira barra horizontal em mobile, grids se adaptam
-
----
-
-## Módulos Desenvolvidos
-
-| # | Módulo | Status |
-|---|---|---|
-| 1 | Autenticação (login, cadastro, Google) | ✅ Concluído |
-| 2 | Dashboard (relógio, estatísticas, cards) | ✅ Concluído |
-| 3 | Calendário (grade, hover, filtros, legenda) | ✅ Concluído |
-| 4 | Configurações base (perfil, categorias) | ✅ Concluído |
-| 5 | Tela de Tarefas (accordion, busca, contadores) | ✅ Concluído |
-| 6A | Settings reestruturado (abas Perfil/Categorias/Visualizações) | ✅ Concluído |
-| 6B | Roteiros (editor, cards, CRUD, visualização completa) | ✅ Concluído |
-
----
-
-## Funcionalidades Planejadas (Futuras)
-
-- [ ] Tema claro / escuro
-- [ ] Visualização de semana no calendário
-- [ ] Drag and drop de tarefas no calendário
-- [ ] Vinculação de roteiros a tarefas e ao calendário
-- [ ] Exportação de roteiros para PDF e Word
-- [ ] Controle de versões dos roteiros
-- [ ] Integração com Google Calendar
-- [ ] Notificações de prazo
-- [ ] Organização por projetos
-
----
-
-## Autor
-
-**Mateus Fagundes**
-Criador de conteúdo e produtor — desenvolveu o MF Agenda como plataforma pessoal de organização para gestão de tarefas, roteiros de gravação e planejamento de conteúdo.
-
-🔗 [github.com/Fagundes7828](https://github.com/Fagundes7828)
-🌐 [fagundes7828.github.io/Gestordetarefas](https://fagundes7828.github.io/Gestordetarefas/)
+- **Cores** — gradiente azul-lavanda-rosa (claro) / preto profundo (escuro), azul `#0a84ff` como primária
+- **Tipografia** — System UI (SF Pro no Apple, Segoe UI no Windows, Roboto no Android)
+- **Tema** — variáveis CSS para alternância completa entre claro e escuro
 
 ---
 
 *Desenvolvido com HTML, CSS e JavaScript puro — sem frameworks, sem dependências de build.*
+
+**MF Agenda v1.0** · © 2026 Mateus Fagundes
