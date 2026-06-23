@@ -250,7 +250,6 @@
           <button class="cfg-tab active" data-tab="perfil" onclick="switchCfgTab('perfil')">👤 Perfil</button>
           <button class="cfg-tab" data-tab="categorias" onclick="switchCfgTab('categorias')">🏷️ Categorias</button>
           <button class="cfg-tab" data-tab="visualizacoes" onclick="switchCfgTab('visualizacoes')">⚙️ Visualizações</button>
-          <button class="cfg-tab" data-tab="integracoes" onclick="switchCfgTab('integracoes')">🔗 Integrações</button>
         </div>
 
         <!-- ===== ABA: PERFIL ===== -->
@@ -395,41 +394,6 @@
             Sair da conta
           </button>
         </div>
-
-        <!-- ===== ABA: INTEGRAÇÕES ===== -->
-        <div class="cfg-tab-content" id="cfgtab-integracoes">
-          <div class="cfg-card">
-            <h3>📅 Google Calendar</h3>
-            <p class="cfg-hint">Conecte sua conta Google para enviar suas tarefas e gravações para o Google Calendar. Elas também aparecerão no Calendário do seu iPhone automaticamente.</p>
-
-            <div class="integ-status" id="gcalStatus">
-              <div class="integ-dot" id="gcalDot"></div>
-              <div class="integ-text">
-                <b id="gcalStatusTitle">Não conectado</b>
-                <span id="gcalStatusDesc">Conecte para sincronizar com o Google Calendar.</span>
-              </div>
-            </div>
-
-            <div class="integ-actions">
-              <button class="btn btn-primary" id="gcalConnectBtn" onclick="conectarGoogleCalendar()">Conectar Google Calendar</button>
-              <button class="btn btn-soft" id="gcalSyncBtn" onclick="sincronizarTudoGoogle()" style="display:none">↻ Sincronizar agora</button>
-              <button class="btn btn-soft" id="gcalDisconnectBtn" onclick="desconectarGoogleCalendar()" style="display:none">Desconectar</button>
-            </div>
-
-            <div class="integ-log" id="gcalLog"></div>
-          </div>
-
-          <div class="cfg-card">
-            <h3>ℹ️ Como funciona</h3>
-            <p class="cfg-hint" style="line-height:1.7">
-              • Ao conectar, suas tarefas com data e suas gravações de roteiro são enviadas como eventos para o seu Google Calendar.<br>
-              • Cada item vira um evento no dia correspondente.<br>
-              • Como seu iPhone sincroniza com o Google, os eventos aparecem no app <b>Calendário</b> do iOS sem configuração extra.<br>
-              • Por enquanto a sincronização é de <b>envio</b> (MF Agenda → Google). Em breve traremos os eventos do Google para cá também.
-            </p>
-          </div>
-        </div>
-
       </section>
 
     </main>
@@ -677,8 +641,6 @@
     </div>
   </div>
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js" async defer></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
