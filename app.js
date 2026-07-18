@@ -853,19 +853,41 @@ function montarCatDropdown() {
   const ativas = categorias.filter(c => c.ativa &&
     c.nome.toLowerCase().includes(buscaCatDropdown));
   list.innerHTML = "";
-  if (!categorias.filter(c => c.ativa).length) {
-    list.innerHTML = `<div class="cat-dd-empty">Nenhuma categoria. Cadastre em Configurações.</div>`;
-    return;
+  const temAtivas = categorias.filter(c => c.ativa).length > 0;
+  if (!temAtivas) {
+    list.innerHTML = `<div class="cat-dd-empty">Nenhuma categoria ainda.</div>`;
+  } else if (!ativas.length) {
+    list.innerHTML = `<div class="cat-dd-empty">Nada encontrado.</div>`;
+  } else {
+    ativas.forEach(c => {
+      const o = document.createElement("div");
+      o.className = "cat-dd-opt";
+      o.innerHTML = `<span class="dd-dot" style="background:${c.cor}"></span><span></span>`;
+      o.querySelector("span:last-child").textContent = c.nome;
+      o.onclick = () => { definirCategoriaSelecionada(c.nome); document.getElementById("catDropdown").classList.remove("open"); };
+      list.appendChild(o);
+    });
   }
-  if (!ativas.length) { list.innerHTML = `<div class="cat-dd-empty">Nada encontrado.</div>`; return; }
-  ativas.forEach(c => {
-    const o = document.createElement("div");
-    o.className = "cat-dd-opt";
-    o.innerHTML = `<span class="dd-dot" style="background:${c.cor}"></span><span></span>`;
-    o.querySelector("span:last-child").textContent = c.nome;
-    o.onclick = () => { definirCategoriaSelecionada(c.nome); document.getElementById("catDropdown").classList.remove("open"); };
-    list.appendChild(o);
-  });
+  // botão fixo "criar categoria" sempre no final
+  const criar = document.createElement("button");
+  criar.type = "button";
+  criar.className = "cat-dd-create";
+  criar.innerHTML = `<span class="cat-dd-plus">+</span> Criar categoria`;
+  criar.onclick = irParaCriarCategoria;
+  list.appendChild(criar);
+}
+
+// fecha o modal de tarefa e leva para a aba de Categorias em Configurações
+function irParaCriarCategoria() {
+  document.getElementById("catDropdown").classList.remove("open");
+  closeTaskModal();
+  goPage("config");
+  switchCfgTab("categorias");
+  // foca o campo de nome da nova categoria, se existir
+  setTimeout(() => {
+    const campo = document.getElementById("catNome");
+    if (campo) { campo.focus(); campo.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  }, 200);
 }
 
 // Define a categoria escolhida (atualiza hidden, visual e cor herdada)
